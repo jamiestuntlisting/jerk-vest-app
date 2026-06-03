@@ -35,9 +35,17 @@ npm run build:web   # outputs to ./dist
 
 ## Deploy (Vercel)
 
-`vercel.json` is preconfigured: build `expo export -p web`, output `dist`,
-`cleanUrls` on (so `/admin`, `/movies`, etc. resolve directly). Set the env
-vars from `.env.example` in the Vercel project for analytics.
+`vercel.json` is preconfigured: build `npx expo export -p web`, output `dist`,
+`cleanUrls` on (so `/admin`, `/movies`, etc. resolve directly). No env vars are
+required to deploy.
+
+**Import steps:**
+
+1. https://vercel.com/new → import `jamiestuntlisting/jerk-vest-app`.
+2. If the code is on a feature branch (not `main`): after import, go to
+   **Settings → Git → Production Branch**, set it to that branch, and redeploy.
+   (Or merge the branch into `main` first and import normally.)
+3. Vercel auto-detects `vercel.json`; just deploy. Future pushes auto-deploy.
 
 ## Analytics
 
