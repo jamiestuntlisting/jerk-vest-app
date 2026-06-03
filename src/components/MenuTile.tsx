@@ -1,8 +1,8 @@
 /**
- * A single DVD-menu feature tile: thumbnail + title + blurb + play arrow.
- * Stretches to fill its grid cell so the six tiles fill the screen. When it is
- * the "active" tile (the menu cycles a highlight through them like a DVD remote
- * selection) it lifts, its border glows orange, and the arrow nudges.
+ * A full-width DVD-menu tile in the mockup style: image (or headshots /
+ * monogram) on the left, heavy italic orange title, light all-caps description,
+ * orange play arrow. Full width gives the title + description room to be big and
+ * never truncated. The menu cycles an orange highlight through the tiles.
  */
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -23,6 +23,44 @@ import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
 import { colors, fonts, glow, fill, rgba } from '@/lib/theme';
 
+function ImageArea({ item }: { item: MenuItem }) {
+  if (item.avatars?.length) {
+    return (
+      <View style={styles.avatars}>
+        {item.avatars.map((a, i) => {
+          const accent = a.accent === 'orange' ? colors.orange : colors.purpleLight;
+          return (
+            <View
+              key={a.initials}
+              style={[styles.avatar, { borderColor: accent, marginLeft: i > 0 ? -22 : 0, zIndex: item.avatars!.length - i }]}>
+              {a.url ? (
+                <Image source={{ uri: a.url }} style={fill} contentFit="cover" transition={200} />
+              ) : (
+                <Text style={[styles.avatarText, { color: accent }]}>{a.initials}</Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+  if (item.monoText || !item.thumb) {
+    return (
+      <View style={styles.imageInner}>
+        <LinearGradient colors={[colors.purpleDark, colors.purpleDeep]} style={fill} />
+        <Text style={styles.monogram}>{item.monoText ?? 'JV'}</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.imageInner}>
+      <Image source={{ uri: item.thumb }} style={fill} contentFit="cover" transition={250} cachePolicy="memory-disk" />
+      <LinearGradient colors={[rgba(colors.purpleDeep, 0.2), rgba(colors.purple, 0.55)]} style={fill} />
+      <View style={styles.gloss} />
+    </View>
+  );
+}
+
 export default function MenuTile({
   item,
   index,
@@ -38,7 +76,7 @@ export default function MenuTile({
   const press = useSharedValue(0);
 
   useEffect(() => {
-    enter.value = withDelay(120 + index * 90, withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) }));
+    enter.value = withDelay(120 + index * 80, withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) }));
   }, [enter, index]);
 
   useEffect(() => {
@@ -48,14 +86,13 @@ export default function MenuTile({
   const cardStyle = useAnimatedStyle(() => ({
     opacity: enter.value,
     transform: [
-      { translateY: interpolate(enter.value, [0, 1], [18, 0]) },
-      { scale: interpolate(act.value, [0, 1], [1, 1.03]) - interpolate(press.value, [0, 1], [0, 0.04]) },
+      { translateY: interpolate(enter.value, [0, 1], [16, 0]) },
+      { scale: interpolate(act.value, [0, 1], [1, 1.02]) - interpolate(press.value, [0, 1], [0, 0.025]) },
     ],
   }));
-
   const glowStyle = useAnimatedStyle(() => ({ opacity: act.value }));
   const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: interpolate(act.value, [0, 1], [0, 5]) }],
+    transform: [{ translateX: interpolate(act.value, [0, 1], [0, 6]) }],
     opacity: interpolate(act.value, [0, 1], [0.85, 1]),
   }));
 
@@ -78,38 +115,19 @@ export default function MenuTile({
         accessibilityRole="button"
         accessibilityLabel={`${item.title}. ${item.blurb}`}
         style={styles.card}>
-        {/* thumbnail (or JV monogram when there's no image) */}
-        <View style={styles.thumbWrap}>
-          {item.thumb ? (
-            <>
-              <Image source={{ uri: item.thumb }} style={fill} contentFit="cover" transition={250} cachePolicy="memory-disk" />
-              <LinearGradient colors={[rgba(colors.purpleDeep, 0.25), rgba(colors.purple, 0.65)]} style={fill} />
-            </>
-          ) : (
-            <>
-              <LinearGradient colors={[colors.purpleDark, colors.purpleDeep]} style={fill} />
-              <Text style={styles.monogram}>JV</Text>
-            </>
-          )}
-          <View style={styles.thumbGloss} />
+        <View style={styles.imageWrap}>
+          <ImageArea item={item} />
         </View>
 
-        {/* text */}
         <View style={styles.body}>
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            {item.title.toUpperCase()}
-          </Text>
-          <Text style={styles.blurb} numberOfLines={3}>
-            {item.blurb}
-          </Text>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.blurb}>{item.blurb}</Text>
         </View>
 
-        {/* arrow */}
         <Animated.View style={[styles.arrowWrap, arrowStyle]}>
           <View style={styles.arrow} />
         </Animated.View>
 
-        {/* active glow border */}
         <Animated.View pointerEvents="none" style={[styles.activeBorder, glowStyle]} />
       </Pressable>
     </Animated.View>
@@ -117,40 +135,71 @@ export default function MenuTile({
 }
 
 const styles = StyleSheet.create({
-  cell: { flex: 1 },
+  cell: { width: '100%' },
   card: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
     backgroundColor: colors.tileBg,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.tileBorder,
-    padding: 9,
+    padding: 11,
     overflow: 'hidden',
+    minHeight: 104,
   },
-  thumbWrap: {
-    width: '33%',
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: colors.purpleDeep,
-    borderWidth: 1,
-    borderColor: rgba(colors.purpleLight, 0.35),
+  imageWrap: { width: 104, borderRadius: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  imageInner: {
+    ...fill,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.purpleDeep,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: rgba(colors.purpleLight, 0.35),
   },
-  monogram: { fontFamily: fonts.display, color: rgba(colors.orange, 0.85), fontSize: 32, transform: [{ skewX: '-8deg' }] },
-  thumbGloss: { position: 'absolute', top: 0, left: 0, right: 0, height: '42%', backgroundColor: rgba(colors.white, 0.08) },
-  body: { flex: 1, paddingHorizontal: 10, justifyContent: 'center' },
-  title: { fontFamily: fonts.heading, color: colors.orange, fontSize: 27, letterSpacing: 1, marginBottom: 4 },
-  blurb: { fontFamily: fonts.body, color: colors.textBright, fontSize: 14, lineHeight: 18 },
-  arrowWrap: { alignSelf: 'center', paddingHorizontal: 4 },
+  gloss: { position: 'absolute', top: 0, left: 0, right: 0, height: '42%', backgroundColor: rgba(colors.white, 0.08) },
+  monogram: { fontFamily: fonts.display, color: rgba(colors.orange, 0.9), fontSize: 38, transform: [{ skewX: '-8deg' }] },
+  avatars: { ...fill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 2,
+    backgroundColor: colors.purpleDeep,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...glow(colors.purpleDark, 8, 0.5),
+  },
+  avatarText: { fontFamily: fonts.display, fontSize: 24 },
+  body: { flex: 1, paddingHorizontal: 14, justifyContent: 'center', paddingVertical: 4 },
+  title: {
+    fontFamily: fonts.display,
+    color: colors.orange,
+    fontSize: 30,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    transform: [{ skewX: '-9deg' }],
+    marginBottom: 5,
+    ...glow(colors.orangeDeep, 8, 0.35),
+  },
+  blurb: {
+    fontFamily: fonts.bodyMedium,
+    color: colors.textBright,
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    transform: [{ skewX: '-4deg' }],
+  },
+  arrowWrap: { alignSelf: 'center', paddingLeft: 8, paddingRight: 2 },
   arrow: {
     width: 0,
     height: 0,
-    borderTopWidth: 9,
-    borderBottomWidth: 9,
-    borderLeftWidth: 15,
+    borderTopWidth: 11,
+    borderBottomWidth: 11,
+    borderLeftWidth: 18,
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
     borderLeftColor: colors.orange,

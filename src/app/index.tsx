@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import JerkVestLogo from '@/components/JerkVestLogo';
 import MenuTile from '@/components/MenuTile';
 import { SpecialFeaturesBar, DvdVideoMark } from '@/components/Chrome';
-import { MENU } from '@/lib/content';
-import { space } from '@/lib/theme';
-
-// Lay the six tiles out as three rows of two so they can stretch to fill.
-const ROWS = [MENU.slice(0, 2), MENU.slice(2, 4), MENU.slice(4, 6)];
+import { MENU, INSTAGRAM_LINK } from '@/lib/content';
+import { openExternal } from '@/lib/links';
+import { colors, fonts, glow, rgba, space } from '@/lib/theme';
 
 export default function MenuScreen() {
   const reduced = !!useReducedMotion();
@@ -28,30 +26,27 @@ export default function MenuScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.top}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
+        <View style={styles.header}>
           <SpecialFeaturesBar />
-        </View>
-
-        <View style={styles.logo}>
-          <JerkVestLogo size={0.8} />
+          <View style={styles.logo}>
+            <JerkVestLogo size={0.82} />
+          </View>
         </View>
 
         <View style={styles.grid}>
-          {ROWS.map((row, r) => (
-            <View key={r} style={styles.row}>
-              {row.map((item, c) => (
-                <MenuTile key={item.key} item={item} index={r * 2 + c} active={active === r * 2 + c} />
-              ))}
-            </View>
+          {MENU.map((item, i) => (
+            <MenuTile key={item.key} item={item} index={i} active={active === i} />
           ))}
         </View>
 
-        <View style={styles.bottom}>
+        <View style={styles.footer}>
+          <Pressable
+            onPress={() => openExternal(INSTAGRAM_LINK.url, 'instagram')}
+            style={({ pressed }) => [styles.ig, pressed && { opacity: 0.85 }]}>
+            <Text style={styles.igGlyph}>◉</Text>
+            <Text style={styles.igText}>FOLLOW {INSTAGRAM_LINK.handle}</Text>
+          </Pressable>
           <DvdVideoMark />
         </View>
       </ScrollView>
@@ -67,10 +62,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingTop: space.md,
     paddingBottom: space.sm,
+    justifyContent: 'space-between',
   },
-  top: { width: '100%', alignItems: 'center', marginTop: space.xs },
-  logo: { alignItems: 'center', marginVertical: space.md },
-  grid: { flex: 1, width: '100%', gap: space.md, justifyContent: 'center', minHeight: 360 },
-  row: { flex: 1, flexDirection: 'row', gap: space.md },
-  bottom: { marginTop: space.md, alignItems: 'center' },
+  header: { alignItems: 'center' },
+  logo: { alignItems: 'center', marginTop: space.md },
+  grid: { width: '100%', gap: space.md, marginVertical: space.lg },
+  footer: { alignItems: 'center', gap: space.lg },
+  ig: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: rgba(colors.orange, 0.7),
+    backgroundColor: rgba(colors.orange, 0.12),
+    ...glow(colors.orange, 12, 0.4),
+  },
+  igGlyph: { color: colors.orange, fontSize: 20 },
+  igText: { fontFamily: fonts.heading, color: colors.orange, letterSpacing: 2.5, fontSize: 19 },
 });

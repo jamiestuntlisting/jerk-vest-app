@@ -16,3 +16,7 @@ export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? ''
 export const BG_VIDEO_URL = process.env.EXPO_PUBLIC_BG_VIDEO_URL ?? '';
 /** Optional menu audio loop (stays OFF until the user toggles it). */
 export const MENU_AUDIO_URL = process.env.EXPO_PUBLIC_MENU_AUDIO_URL ?? '';
+
+/** Optional headshot photos for the About page. Empty = initials avatars. */
+export const HEADSHOT_NICK_URL = process.env.EXPO_PUBLIC_HEADSHOT_NICK_URL ?? '';
+export const HEADSHOT_JAMIE_URL = process.env.EXPO_PUBLIC_HEADSHOT_JAMIE_URL ?? '';

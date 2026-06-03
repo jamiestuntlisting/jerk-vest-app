@@ -8,16 +8,16 @@ cycles like a DVD remote selection.
 
 ## Routes
 
-| Route      | What it is                                            |
-| ---------- | ----------------------------------------------------- |
-| `/`        | The DVD "Special Features" menu (6 tiles)             |
-| `/movies`  | Films — the gorilla trilogy, promos, Dodge Brick      |
-| `/bts`     | Behind the scenes / making-ofs / bloopers             |
-| `/about`   | Who we are (Nick & Jamie) + contact                   |
-| `/more`    | Trailers, merch link, press & contact                 |
-| `/admin`   | **Hidden** analytics dashboard (no link; URL only)    |
-| Instagram  | External → https://www.instagram.com/JERKVEST/        |
-| Shop       | External → Shopify "Dodge Brick" collection           |
+| Route          | What it is                                            |
+| -------------- | ----------------------------------------------------- |
+| `/`            | The DVD "Special Features" menu                        |
+| `/grorillogy`  | The gorilla trilogy (3 films + behind the scenes)     |
+| `/dodge-brick` | Dodge Brick short film                                |
+| `/stuntlisting`| StuntListing promos + collab                          |
+| `/about`       | Who we are (Nick & Jamie) + contact                   |
+| `/admin`       | **Hidden** analytics dashboard (no link; URL only)    |
+| Instagram      | External → https://www.instagram.com/JERKVEST/        |
+| Shop           | External → Shopify "Dodge Brick" collection           |
 
 ## Run it
 
