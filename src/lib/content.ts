@@ -34,7 +34,7 @@ export type VideoItem = {
 };
 
 export type Project = {
-  key: string; // route slug, e.g. /grorillogy
+  key: string; // route slug
   title: string;
   eyebrow: string;
   intro: string;
@@ -42,11 +42,12 @@ export type Project = {
   bts?: VideoItem[];
 };
 
-/* ------------------------------- The Grorillogy ------------------------------ */
+/* -------------------------------- Gorillology ------------------------------- */
+/* Gorilla content only. */
 
-export const GRORILLOGY: Project = {
-  key: 'grorillogy',
-  title: 'The Grorillogy',
+export const GORILLOLOGY: Project = {
+  key: 'gorillology',
+  title: 'Gorillology',
   eyebrow: 'THE GORILLA TRILOGY',
   intro:
     'Three films, one gorilla. From a chance meeting in Prospect Park to a courtroom showdown — the whole primate saga.',
@@ -117,41 +118,36 @@ export const GRORILLOGY: Project = {
   ],
   bts: [
     {
-      id: 'bts-reel',
-      title: 'Jerk Vest Reel',
-      description: 'Behind the scenes and action highlights from the trilogy.',
-      embedUrl: 'https://www.instagram.com/jerkvest/reel/DMVthqOxZbv/embed',
-    },
-    {
-      id: 'bts-making',
-      title: 'Making of the Grorillogy',
-      description: 'From Prospect Park to the courtroom — how it all came together: stunts, VFX, and all.',
+      id: 'gorilla-making',
+      title: 'Making of Gorillology',
+      description: 'From Prospect Park to the courtroom — how the gorilla trilogy came together: stunts, VFX, and all.',
       status: 'Coming Soon',
     },
     {
-      id: 'bts-bloopers',
-      title: 'Bloopers',
+      id: 'gorilla-bloopers',
+      title: 'Gorilla Bloopers',
       description: 'The takes that did not make the cut. Big swings, bigger misses.',
       status: 'Coming Soon',
     },
   ],
 };
 
-/* --------------------------------- Dodge Brick ------------------------------- */
+/* --------------------------------- Dodge Brick ------------------------------ */
 
 export const DODGE_BRICK: Project = {
   key: 'dodge-brick',
   title: 'Dodge Brick',
   eyebrow: 'SHORT FILM',
   intro:
-    'Our action short — intense stunt choreography and creative visual effects. In post-production now; the official merch collection is already live in the Shop.',
+    'Our action short — out now. Intense stunt choreography and creative visual effects. The official merch collection is live in the Shop.',
   videos: [
     {
       id: 'dodge-brick',
       title: 'Dodge Brick',
       description:
         'An action-packed short featuring intense stunt choreography and creative visual effects.',
-      status: 'In Post-Production',
+      youtubeId: 'ifg8wNuCd28',
+      thumb: yt('ifg8wNuCd28'),
     },
   ],
 };
@@ -194,7 +190,7 @@ export const STUNTLISTING: Project = {
   ],
 };
 
-export const PROJECTS: Project[] = [GRORILLOGY, DODGE_BRICK, STUNTLISTING];
+export const PROJECTS: Project[] = [GORILLOLOGY, DODGE_BRICK, STUNTLISTING];
 
 /* ----------------------------------- Menu ----------------------------------- */
 
@@ -207,34 +203,34 @@ export type MenuItem = {
   target: string;
   kind: 'route' | 'external';
   thumb?: string;
-  /** Render a monogram tile (e.g. "JV", "DB") instead of a photo. */
+  /** Render a monogram tile (e.g. "JV") instead of a photo. */
   monoText?: string;
   /** Render headshots instead of a thumbnail (About). */
   avatars?: Avatar[];
 };
 
-/** Menu tiles. Each project links to its own page; Shop is external. */
+/** Menu tiles. Short blurbs so the whole menu fits one screen (no scroll). */
 export const MENU: MenuItem[] = [
   {
-    key: 'grorillogy',
-    title: 'The Grorillogy',
-    blurb: 'The gorilla trilogy — Prospect Park to the courtroom.',
-    target: '/grorillogy',
+    key: 'gorillology',
+    title: 'Gorillology',
+    blurb: 'The gorilla trilogy.',
+    target: '/gorillology',
     kind: 'route',
     thumb: yt('umJJp33Sv4c'),
   },
   {
     key: 'dodge-brick',
     title: 'Dodge Brick',
-    blurb: 'Our action short — intense stunts and VFX. In post now.',
+    blurb: 'Our action short — out now.',
     target: '/dodge-brick',
     kind: 'route',
-    monoText: 'DB',
+    thumb: yt('ifg8wNuCd28'),
   },
   {
     key: 'stuntlisting',
-    title: 'StuntListing Promos',
-    blurb: 'The promos and our StuntListing collaboration.',
+    title: 'StuntListing',
+    blurb: 'Promos & our collab.',
     target: '/stuntlisting',
     kind: 'route',
     thumb: yt('nyVyFMP1hpI'),
@@ -242,7 +238,7 @@ export const MENU: MenuItem[] = [
   {
     key: 'about',
     title: 'About Us',
-    blurb: 'Who we are, what we do, and how to reach us.',
+    blurb: 'Who we are + contact.',
     target: '/about',
     kind: 'route',
     avatars: [
@@ -253,7 +249,7 @@ export const MENU: MenuItem[] = [
   {
     key: 'shop',
     title: 'Shop',
-    blurb: 'Official merch, apparel, accessories, and more.',
+    blurb: 'Official merch & apparel.',
     target: SITE.shop,
     kind: 'external',
     monoText: 'JV',

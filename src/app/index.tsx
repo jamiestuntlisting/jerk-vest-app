@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReducedMotion } from 'react-native-reanimated';
 
@@ -26,12 +26,12 @@ export default function MenuScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
-        <View style={styles.header}>
-          <SpecialFeaturesBar />
-          <View style={styles.logo}>
-            <JerkVestLogo size={0.82} />
-          </View>
+      {/* Whole menu fits one screen — no ScrollView. The grid flexes to fill. */}
+      <View style={styles.container}>
+        <SpecialFeaturesBar />
+
+        <View style={styles.logo}>
+          <JerkVestLogo size={0.58} />
         </View>
 
         <View style={styles.grid}>
@@ -49,38 +49,35 @@ export default function MenuScreen() {
           </Pressable>
           <DvdVideoMark />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  scroll: { flex: 1 },
-  content: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     paddingHorizontal: space.lg,
-    paddingTop: space.md,
+    paddingTop: space.sm,
     paddingBottom: space.sm,
-    justifyContent: 'space-between',
   },
-  header: { alignItems: 'center' },
-  logo: { alignItems: 'center', marginTop: space.md },
-  grid: { width: '100%', gap: space.md, marginVertical: space.lg },
-  footer: { alignItems: 'center', gap: space.lg },
+  logo: { alignItems: 'center', marginVertical: space.sm },
+  grid: { flex: 1, width: '100%', gap: space.sm },
+  footer: { alignItems: 'center', gap: space.sm, marginTop: space.sm },
   ig: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     width: '100%',
-    paddingVertical: 15,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: rgba(colors.orange, 0.7),
     backgroundColor: rgba(colors.orange, 0.12),
-    ...glow(colors.orange, 12, 0.4),
+    ...glow(colors.orange, 10, 0.4),
   },
-  igGlyph: { color: colors.orange, fontSize: 20 },
-  igText: { fontFamily: fonts.heading, color: colors.orange, letterSpacing: 2.5, fontSize: 19 },
+  igGlyph: { color: colors.orange, fontSize: 18 },
+  igText: { fontFamily: fonts.heading, color: colors.orange, letterSpacing: 2.5, fontSize: 17 },
 });

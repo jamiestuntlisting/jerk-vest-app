@@ -1,8 +1,8 @@
 /**
  * A full-width DVD-menu tile in the mockup style: image (or headshots /
  * monogram) on the left, heavy italic orange title, light all-caps description,
- * orange play arrow. Full width gives the title + description room to be big and
- * never truncated. The menu cycles an orange highlight through the tiles.
+ * orange play arrow. Tiles flex to share the menu's height so the whole menu
+ * fits one screen with no scroll, while titles stay big and never truncated.
  */
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -32,7 +32,7 @@ function ImageArea({ item }: { item: MenuItem }) {
           return (
             <View
               key={a.initials}
-              style={[styles.avatar, { borderColor: accent, marginLeft: i > 0 ? -22 : 0, zIndex: item.avatars!.length - i }]}>
+              style={[styles.avatar, { borderColor: accent, marginLeft: i > 0 ? -18 : 0, zIndex: item.avatars!.length - i }]}>
               {a.url ? (
                 <Image source={{ uri: a.url }} style={fill} contentFit="cover" transition={200} />
               ) : (
@@ -76,7 +76,7 @@ export default function MenuTile({
   const press = useSharedValue(0);
 
   useEffect(() => {
-    enter.value = withDelay(120 + index * 80, withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) }));
+    enter.value = withDelay(100 + index * 70, withTiming(1, { duration: 480, easing: Easing.out(Easing.cubic) }));
   }, [enter, index]);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function MenuTile({
   const cardStyle = useAnimatedStyle(() => ({
     opacity: enter.value,
     transform: [
-      { translateY: interpolate(enter.value, [0, 1], [16, 0]) },
+      { translateY: interpolate(enter.value, [0, 1], [14, 0]) },
       { scale: interpolate(act.value, [0, 1], [1, 1.02]) - interpolate(press.value, [0, 1], [0, 0.025]) },
     ],
   }));
@@ -135,19 +135,20 @@ export default function MenuTile({
 }
 
 const styles = StyleSheet.create({
-  cell: { width: '100%' },
+  cell: { flex: 1, width: '100%' },
   card: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
     backgroundColor: colors.tileBg,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.tileBorder,
-    padding: 11,
+    padding: 8,
     overflow: 'hidden',
-    minHeight: 104,
+    minHeight: 52,
   },
-  imageWrap: { width: 104, borderRadius: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  imageWrap: { width: 88, borderRadius: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   imageInner: {
     ...fill,
     alignItems: 'center',
@@ -159,56 +160,56 @@ const styles = StyleSheet.create({
     borderColor: rgba(colors.purpleLight, 0.35),
   },
   gloss: { position: 'absolute', top: 0, left: 0, right: 0, height: '42%', backgroundColor: rgba(colors.white, 0.08) },
-  monogram: { fontFamily: fonts.display, color: rgba(colors.orange, 0.9), fontSize: 38, transform: [{ skewX: '-8deg' }] },
+  monogram: { fontFamily: fonts.display, color: rgba(colors.orange, 0.9), fontSize: 30, transform: [{ skewX: '-8deg' }] },
   avatars: { ...fill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   avatar: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2,
     backgroundColor: colors.purpleDeep,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    ...glow(colors.purpleDark, 8, 0.5),
+    ...glow(colors.purpleDark, 6, 0.5),
   },
-  avatarText: { fontFamily: fonts.display, fontSize: 24 },
-  body: { flex: 1, paddingHorizontal: 14, justifyContent: 'center', paddingVertical: 4 },
+  avatarText: { fontFamily: fonts.display, fontSize: 18 },
+  body: { flex: 1, paddingHorizontal: 12, justifyContent: 'center', paddingVertical: 2 },
   title: {
     fontFamily: fonts.display,
     color: colors.orange,
-    fontSize: 30,
+    fontSize: 25,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     transform: [{ skewX: '-9deg' }],
-    marginBottom: 5,
+    marginBottom: 3,
     ...glow(colors.orangeDeep, 8, 0.35),
   },
   blurb: {
     fontFamily: fonts.bodyMedium,
     color: colors.textBright,
-    fontSize: 15,
-    lineHeight: 20,
-    letterSpacing: 0.4,
+    fontSize: 13.5,
+    lineHeight: 17,
+    letterSpacing: 0.3,
     textTransform: 'uppercase',
     transform: [{ skewX: '-4deg' }],
   },
-  arrowWrap: { alignSelf: 'center', paddingLeft: 8, paddingRight: 2 },
+  arrowWrap: { alignSelf: 'center', paddingLeft: 6, paddingRight: 2 },
   arrow: {
     width: 0,
     height: 0,
-    borderTopWidth: 11,
-    borderBottomWidth: 11,
-    borderLeftWidth: 18,
+    borderTopWidth: 9,
+    borderBottomWidth: 9,
+    borderLeftWidth: 15,
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
     borderLeftColor: colors.orange,
   },
   activeBorder: {
     ...fill,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: colors.orange,
-    ...glow(colors.orange, 16, 0.7),
+    ...glow(colors.orange, 14, 0.7),
   },
 });

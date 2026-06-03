@@ -11,7 +11,7 @@ cycles like a DVD remote selection.
 | Route          | What it is                                            |
 | -------------- | ----------------------------------------------------- |
 | `/`            | The DVD "Special Features" menu                        |
-| `/grorillogy`  | The gorilla trilogy (3 films + behind the scenes)     |
+| `/gorillology` | The gorilla trilogy (3 films + behind the scenes)     |
 | `/dodge-brick` | Dodge Brick short film                                |
 | `/stuntlisting`| StuntListing promos + collab                          |
 | `/about`       | Who we are (Nick & Jamie) + contact                   |
