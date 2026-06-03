@@ -22,9 +22,9 @@ export default function BtsScreen() {
 const styles = StyleSheet.create({
   intro: {
     fontFamily: fonts.body,
-    color: colors.textDim,
-    fontSize: 13.5,
-    lineHeight: 20,
+    color: colors.textBright,
+    fontSize: 17,
+    lineHeight: 25,
     marginBottom: space.lg,
   },
 });

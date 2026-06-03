@@ -1,8 +1,8 @@
 /**
  * A single DVD-menu feature tile: thumbnail + title + blurb + play arrow.
- * When it is the "active" tile (the menu cycles a highlight through them like
- * a DVD remote selection) it lifts, its border glows orange, and the arrow
- * nudges — so something is always quietly drawing the eye.
+ * Stretches to fill its grid cell so the six tiles fill the screen. When it is
+ * the "active" tile (the menu cycles a highlight through them like a DVD remote
+ * selection) it lifts, its border glows orange, and the arrow nudges.
  */
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -21,7 +21,7 @@ import Animated, {
 import type { MenuItem } from '@/lib/content';
 import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
-import { colors, fonts, glow, fill, rgba, space } from '@/lib/theme';
+import { colors, fonts, glow, fill, rgba } from '@/lib/theme';
 
 export default function MenuTile({
   item,
@@ -49,14 +49,14 @@ export default function MenuTile({
     opacity: enter.value,
     transform: [
       { translateY: interpolate(enter.value, [0, 1], [18, 0]) },
-      { scale: interpolate(act.value, [0, 1], [1, 1.035]) - interpolate(press.value, [0, 1], [0, 0.04]) },
+      { scale: interpolate(act.value, [0, 1], [1, 1.03]) - interpolate(press.value, [0, 1], [0, 0.04]) },
     ],
   }));
 
   const glowStyle = useAnimatedStyle(() => ({ opacity: act.value }));
   const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: interpolate(act.value, [0, 1], [0, 4]) }],
-    opacity: interpolate(act.value, [0, 1], [0.8, 1]),
+    transform: [{ translateX: interpolate(act.value, [0, 1], [0, 5]) }],
+    opacity: interpolate(act.value, [0, 1], [0.85, 1]),
   }));
 
   const onPress = () => {
@@ -78,22 +78,28 @@ export default function MenuTile({
         accessibilityRole="button"
         accessibilityLabel={`${item.title}. ${item.blurb}`}
         style={styles.card}>
-        {/* thumbnail */}
+        {/* thumbnail (or JV monogram when there's no image) */}
         <View style={styles.thumbWrap}>
-          <Image source={{ uri: item.thumb }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} cachePolicy="memory-disk" />
-          <LinearGradient
-            colors={[rgba(colors.purpleDeep, 0.25), rgba(colors.purple, 0.65)]}
-            style={StyleSheet.absoluteFill}
-          />
+          {item.thumb ? (
+            <>
+              <Image source={{ uri: item.thumb }} style={fill} contentFit="cover" transition={250} cachePolicy="memory-disk" />
+              <LinearGradient colors={[rgba(colors.purpleDeep, 0.25), rgba(colors.purple, 0.65)]} style={fill} />
+            </>
+          ) : (
+            <>
+              <LinearGradient colors={[colors.purpleDark, colors.purpleDeep]} style={fill} />
+              <Text style={styles.monogram}>JV</Text>
+            </>
+          )}
           <View style={styles.thumbGloss} />
         </View>
 
         {/* text */}
         <View style={styles.body}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {item.title.toUpperCase()}
           </Text>
-          <Text style={styles.blurb} numberOfLines={4}>
+          <Text style={styles.blurb} numberOfLines={3}>
             {item.blurb}
           </Text>
         </View>
@@ -111,54 +117,49 @@ export default function MenuTile({
 }
 
 const styles = StyleSheet.create({
-  cell: { width: '48%', marginBottom: space.md },
+  cell: { flex: 1 },
   card: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: colors.tileBg,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.tileBorder,
-    padding: 7,
+    padding: 9,
     overflow: 'hidden',
-    minHeight: 92,
   },
   thumbWrap: {
-    width: 58,
-    height: 72,
-    borderRadius: 9,
+    width: '33%',
+    borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: colors.purpleDeep,
     borderWidth: 1,
     borderColor: rgba(colors.purpleLight, 0.35),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  thumbGloss: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '45%',
-    backgroundColor: rgba(colors.white, 0.08),
-  },
-  body: { flex: 1, paddingHorizontal: 8, justifyContent: 'center' },
-  title: { fontFamily: fonts.heading, color: colors.orange, fontSize: 17, letterSpacing: 1, marginBottom: 3 },
-  blurb: { fontFamily: fonts.body, color: colors.textDim, fontSize: 9.5, lineHeight: 12.5 },
-  arrowWrap: { paddingRight: 2, paddingLeft: 2 },
+  monogram: { fontFamily: fonts.display, color: rgba(colors.orange, 0.85), fontSize: 32, transform: [{ skewX: '-8deg' }] },
+  thumbGloss: { position: 'absolute', top: 0, left: 0, right: 0, height: '42%', backgroundColor: rgba(colors.white, 0.08) },
+  body: { flex: 1, paddingHorizontal: 10, justifyContent: 'center' },
+  title: { fontFamily: fonts.heading, color: colors.orange, fontSize: 27, letterSpacing: 1, marginBottom: 4 },
+  blurb: { fontFamily: fonts.body, color: colors.textBright, fontSize: 14, lineHeight: 18 },
+  arrowWrap: { alignSelf: 'center', paddingHorizontal: 4 },
   arrow: {
     width: 0,
     height: 0,
-    borderTopWidth: 7,
-    borderBottomWidth: 7,
-    borderLeftWidth: 11,
+    borderTopWidth: 9,
+    borderBottomWidth: 9,
+    borderLeftWidth: 15,
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
     borderLeftColor: colors.orange,
   },
   activeBorder: {
     ...fill,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    borderRadius: 16,
+    borderWidth: 2,
     borderColor: colors.orange,
-    ...glow(colors.orange, 14, 0.65),
+    ...glow(colors.orange, 16, 0.7),
   },
 });

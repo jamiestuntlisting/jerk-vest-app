@@ -1,6 +1,9 @@
 /**
  * All Jerk Vest content lives here so the screens stay presentational.
  * Pulled from the original jerkvest.com project (projects, bios, credits).
+ *
+ * Rule: every playable video has a UNIQUE name and a UNIQUE link. Items still
+ * in editing have no link yet and render as "coming soon" status cards.
  */
 
 export const SITE = {
@@ -12,8 +15,6 @@ export const SITE = {
   shop: 'https://stuntlisting.myshopify.com/collections/dodge-brick',
 };
 
-export type Route = '/movies' | '/bts' | '/about' | '/more';
-
 export type MenuItem = {
   key: string;
   title: string;
@@ -21,17 +22,18 @@ export type MenuItem = {
   /** Internal route OR external URL (kind distinguishes them). */
   target: string;
   kind: 'route' | 'external';
-  thumb: string;
+  thumb?: string;
 };
 
 const yt = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 
-/** The six tiles of the DVD menu, in the order shown on the menu art. */
+/** The six tiles of the DVD menu, in the order shown on the menu art.
+ *  Copy is kept short so it reads big. Every tile uses a distinct image. */
 export const MENU: MenuItem[] = [
   {
     key: 'movies',
     title: 'Movies',
-    blurb: 'Check out our films. Shorts, features, and everything in between.',
+    blurb: 'Shorts, features & everything in between.',
     target: '/movies',
     kind: 'route',
     thumb: yt('umJJp33Sv4c'),
@@ -39,7 +41,7 @@ export const MENU: MenuItem[] = [
   {
     key: 'bts',
     title: 'BTS',
-    blurb: 'Behind the scenes, making-ofs, bloopers, and more.',
+    blurb: 'Behind the scenes, making-ofs & bloopers.',
     target: '/bts',
     kind: 'route',
     thumb: yt('Isafla2k8g4'),
@@ -47,7 +49,7 @@ export const MENU: MenuItem[] = [
   {
     key: 'instagram',
     title: 'Instagram',
-    blurb: 'Follow us on Instagram for updates, photos, and random stuff.',
+    blurb: 'Updates, photos & random stuff.',
     target: SITE.instagram,
     kind: 'external',
     thumb: yt('nyVyFMP1hpI'),
@@ -55,7 +57,7 @@ export const MENU: MenuItem[] = [
   {
     key: 'about',
     title: 'About Us',
-    blurb: 'Who we are, what we do, and why we do it.',
+    blurb: 'Who we are and why we do it.',
     target: '/about',
     kind: 'route',
     thumb: yt('_Vj08ZtK078'),
@@ -63,18 +65,18 @@ export const MENU: MenuItem[] = [
   {
     key: 'shop',
     title: 'Shop',
-    blurb: 'Official merch, apparel, accessories, and more.',
+    blurb: 'Official merch, apparel & more.',
     target: SITE.shop,
     kind: 'external',
     thumb: yt('Ftb3ztQ56S4'),
   },
   {
     key: 'more',
-    title: 'More',
-    blurb: 'Trailers, press, merch, and other cool shit.',
+    title: 'Contact',
+    blurb: 'Bookings, press & where to find us.',
     target: '/more',
     kind: 'route',
-    thumb: yt('Ftb3ztQ56S4'),
+    // no thumb -> renders the JV monogram tile (keeps every tile unique)
   },
 ];
 
@@ -84,7 +86,7 @@ export type VideoItem = {
   id: string;
   title: string;
   description: string;
-  /** A YouTube watch/embed id, an Instagram reel embed, or a frame.io link. */
+  /** A YouTube id (plays inline on web) or an embeddable URL. Absent = no cut yet. */
   youtubeId?: string;
   embedUrl?: string;
   thumb?: string;
@@ -149,41 +151,39 @@ export const MOVIES: VideoItem[] = [
     ],
   },
   {
-    id: 'gorillaw-order',
-    title: 'Gorillaw & Order',
-    description:
-      'The epic conclusion to the Grorillogy trilogy. A genre-bending parody that combines courtroom drama with primate action.',
-    embedUrl: 'https://f.io/0EEfF4qa',
-    status: 'In Editing',
-    credits: [{ role: 'Writer / Director', people: [{ name: 'Jamie Northrup' }, { name: 'Nick Meese' }] }],
-  },
-  {
     id: 'promo1',
-    title: 'Jerk Vest Promo',
-    description: 'High-energy promotional content showcasing our signature style and capabilities.',
+    title: 'Promo Vol. 1',
+    description: 'High-energy promo showcasing our signature style and capabilities.',
     youtubeId: 'nyVyFMP1hpI',
     thumb: yt('nyVyFMP1hpI'),
   },
   {
     id: 'promo2',
-    title: 'Jerk Vest Promo',
+    title: 'Promo Vol. 2',
     description: 'High-octane action and creative stunts in this promotional showcase.',
     youtubeId: '_Vj08ZtK078',
     thumb: yt('_Vj08ZtK078'),
   },
   {
     id: 'promo3',
-    title: 'Jerk Vest Promo',
+    title: 'Promo Vol. 3',
     description: 'Dynamic action sequences highlighting our stunt work and visual effects.',
     youtubeId: 'Ftb3ztQ56S4',
     thumb: yt('Ftb3ztQ56S4'),
   },
   {
+    id: 'gorillaw-order',
+    title: 'Gorillaw & Order',
+    description:
+      'The epic conclusion to the Grorillogy trilogy — a genre-bending parody that combines courtroom drama with primate action.',
+    status: 'In Editing',
+    credits: [{ role: 'Writer / Director', people: [{ name: 'Jamie Northrup' }, { name: 'Nick Meese' }] }],
+  },
+  {
     id: 'stuntlisting',
-    title: 'StuntListing X Jerk Vest',
+    title: 'StuntListing × Jerk Vest',
     description:
       'A collaborative project bringing together stunt professionals for an innovative production.',
-    embedUrl: 'https://f.io/PaHXcRx7',
     status: 'In Post-Production',
   },
   {
@@ -195,17 +195,8 @@ export const MOVIES: VideoItem[] = [
   },
 ];
 
-/** Behind-the-scenes content. Where there is no finished cut yet we surface
- *  the making-of notes and mark it clearly. */
+/** Behind-the-scenes. No link is shared with Movies — only the reel is live. */
 export const BTS: VideoItem[] = [
-  {
-    id: 'bts-100men',
-    title: 'On Set: 100 Men v 1 Gorilla',
-    description:
-      'Filmed before a live studio audience at Argus Filmworks. A look at how we staged the ultimate primate showdown.',
-    youtubeId: 'Isafla2k8g4',
-    thumb: yt('Isafla2k8g4'),
-  },
   {
     id: 'bts-reel',
     title: 'Jerk Vest Reel',
@@ -216,8 +207,7 @@ export const BTS: VideoItem[] = [
     id: 'bts-grorillogy',
     title: 'Making of the Grorillogy',
     description:
-      'From Prospect Park to the courtroom — how the gorilla trilogy came together, stunts, VFX, and all.',
-    thumb: yt('umJJp33Sv4c'),
+      'From Prospect Park to the courtroom — how the gorilla trilogy came together: stunts, VFX, and all.',
     status: 'Coming Soon',
   },
   {
@@ -225,23 +215,6 @@ export const BTS: VideoItem[] = [
     title: 'Bloopers',
     description: 'The takes that did not make the cut. Big swings, bigger misses.',
     status: 'Coming Soon',
-  },
-];
-
-/** "More" — trailers, press, and merch. */
-export const TRAILERS: VideoItem[] = [
-  {
-    id: 'trailer-dodge-brick',
-    title: 'Dodge Brick — Teaser',
-    description: 'Our latest short. Intense stunt choreography and creative visual effects.',
-    status: 'Coming Soon',
-  },
-  {
-    id: 'trailer-gorillaw',
-    title: 'Gorillaw & Order — Trailer',
-    description: 'The epic conclusion to the Grorillogy trilogy.',
-    embedUrl: 'https://f.io/0EEfF4qa',
-    status: 'In Editing',
   },
 ];
 

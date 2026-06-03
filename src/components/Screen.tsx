@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
   backText: { fontFamily: fonts.heading, color: colors.orange, letterSpacing: 2, fontSize: 14 },
   titleWrap: { flex: 1, alignItems: 'center' },
   headerSpacer: { width: 78 },
-  eyebrow: { fontFamily: fonts.heading, color: rgba(colors.purpleGlow, 0.85), letterSpacing: 4, fontSize: 10 },
+  eyebrow: { fontFamily: fonts.heading, color: rgba(colors.purpleGlow, 0.85), letterSpacing: 4, fontSize: 12 },
   title: {
     fontFamily: fonts.display,
     color: colors.orange,
-    fontSize: 30,
+    fontSize: 34,
     letterSpacing: 1,
     transform: [{ skewX: '-8deg' }],
     ...glow(colors.orangeDeep, 10, 0.5),

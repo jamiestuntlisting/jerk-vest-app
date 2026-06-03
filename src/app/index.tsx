@@ -9,6 +9,9 @@ import { SpecialFeaturesBar, DvdVideoMark } from '@/components/Chrome';
 import { MENU } from '@/lib/content';
 import { space } from '@/lib/theme';
 
+// Lay the six tiles out as three rows of two so they can stretch to fill.
+const ROWS = [MENU.slice(0, 2), MENU.slice(2, 4), MENU.slice(4, 6)];
+
 export default function MenuScreen() {
   const reduced = !!useReducedMotion();
   const [active, setActive] = useState(0);
@@ -25,7 +28,11 @@ export default function MenuScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}>
         <View style={styles.top}>
           <SpecialFeaturesBar />
         </View>
@@ -35,8 +42,12 @@ export default function MenuScreen() {
         </View>
 
         <View style={styles.grid}>
-          {MENU.map((item, i) => (
-            <MenuTile key={item.key} item={item} index={i} active={i === active} />
+          {ROWS.map((row, r) => (
+            <View key={r} style={styles.row}>
+              {row.map((item, c) => (
+                <MenuTile key={item.key} item={item} index={r * 2 + c} active={active === r * 2 + c} />
+              ))}
+            </View>
           ))}
         </View>
 
@@ -50,9 +61,16 @@ export default function MenuScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  content: { paddingHorizontal: space.lg, paddingTop: space.lg, alignItems: 'center' },
-  top: { width: '100%', alignItems: 'center', marginTop: space.sm, marginBottom: space.lg },
-  logo: { marginBottom: space.xl, marginTop: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%' },
-  bottom: { marginTop: space.lg, marginBottom: space.xl, alignItems: 'center' },
+  scroll: { flex: 1 },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    paddingBottom: space.sm,
+  },
+  top: { width: '100%', alignItems: 'center', marginTop: space.xs },
+  logo: { alignItems: 'center', marginVertical: space.md },
+  grid: { flex: 1, width: '100%', gap: space.md, justifyContent: 'center', minHeight: 360 },
+  row: { flex: 1, flexDirection: 'row', gap: space.md },
+  bottom: { marginTop: space.md, alignItems: 'center' },
 });
