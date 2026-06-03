@@ -1,0 +1,84 @@
+/* Jerk Vest — web-only chrome. On native these effects are drawn with RN views. */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #06050b;
+  overflow-x: hidden;
+  /* keep the menu feeling like an app: no rubber-band white edges */
+  overscroll-behavior: none;
+}
+
+/* Vignette — darkens the edges like a CRT / DVD player output. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  background: radial-gradient(
+    125% 85% at 50% 32%,
+    rgba(0, 0, 0, 0) 38%,
+    rgba(4, 3, 9, 0.6) 78%,
+    rgba(4, 3, 9, 0.92) 100%
+  );
+}
+
+/* Moving scanlines + a faint flicker. The whole point of "looks like a DVD". */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9001;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.16) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  background-size: 100% 4px;
+  opacity: 0.45;
+  animation:
+    jv-scan 9s linear infinite,
+    jv-flicker 6s steps(60) infinite;
+}
+
+@keyframes jv-scan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 140px;
+  }
+}
+
+@keyframes jv-flicker {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  53% {
+    opacity: 0.38;
+  }
+}
+
+/* Respect reduced-motion: drop the animated overlays. */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
