@@ -12,8 +12,9 @@ import { useAudioPlayer } from 'expo-audio';
 
 import { track } from '@/lib/analytics';
 import { colors, glow, rgba } from '@/lib/theme';
+import { MENU_AUDIO_URL } from '@/lib/config';
 
-const AUDIO_URL = process.env.EXPO_PUBLIC_MENU_AUDIO_URL;
+const AUDIO_URL = MENU_AUDIO_URL;
 
 function SpeakerIcon({ on }: { on: boolean }) {
   return (

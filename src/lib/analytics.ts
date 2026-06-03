@@ -7,7 +7,7 @@
  * - Every call is wrapped so analytics can never break the UI.
  */
 import { Platform } from 'react-native';
-import { supabase, ANALYTICS_FN_URL } from './supabase';
+import { supabase } from './supabase';
 
 function rand() {
   return (
@@ -89,15 +89,15 @@ export type AnalyticsSummary = {
   recent: { created_at: string; event_type: string; path: string | null; label: string | null }[];
 };
 
-/** Fetch the dashboard summary from the edge function using an admin token. */
+/**
+ * Fetch the dashboard summary. Calls the token-gated `analytics_summary` RPC
+ * with the public anon key; the token is verified server-side, so a wrong token
+ * returns no data.
+ */
 export async function fetchAnalytics(token: string): Promise<AnalyticsSummary> {
-  if (!ANALYTICS_FN_URL) {
-    throw new Error('NOT_CONFIGURED');
-  }
-  const res = await fetch(ANALYTICS_FN_URL, {
-    headers: { 'x-admin-token': token },
-  });
-  if (res.status === 401) throw new Error('UNAUTHORIZED');
-  if (!res.ok) throw new Error('REQUEST_FAILED');
-  return (await res.json()) as AnalyticsSummary;
+  if (!supabase) throw new Error('NOT_CONFIGURED');
+  const { data, error } = await supabase.rpc('analytics_summary', { p_token: token });
+  if (error) throw new Error('REQUEST_FAILED');
+  if (!data || (data as { error?: string }).error) throw new Error('UNAUTHORIZED');
+  return data as AnalyticsSummary;
 }

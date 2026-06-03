@@ -44,10 +44,14 @@ vars from `.env.example` in the Vercel project for analytics.
 Fire-and-forget event logging (`page_view`, `menu_click`, `outbound_click`,
 `video_play`, `audio_toggle`) writes to Supabase using the public anon key,
 which is restricted by RLS to **insert-only**. The `/admin` dashboard reads
-aggregates through a **token-gated Supabase edge function**, so the data is
-never exposed to the anon key. See `supabase/` for the schema + function.
+aggregates through a **token-gated `analytics_summary(token)` RPC** that is
+`SECURITY DEFINER` and checks the admin token server-side (the token lives in a
+`private` schema, never exposed over the API). A wrong token returns no data.
+See `supabase/migrations/` for the schema + function.
 
-Without the Supabase env vars the app still works — analytics just no-op and
+Public Supabase config (URL + anon key) lives in `src/lib/config.ts` so the
+Vercel build works without dashboard env vars; the **admin token is only ever
+in the database**. Without config the app still works — analytics just no-op and
 `/admin` shows a "not configured" note.
 
 ## Notes / pluggable bits
@@ -64,5 +68,5 @@ src/
   app/            file-based routes (Expo Router)
   components/     BackgroundFX, JerkVestLogo, MenuTile, DvdFrame, VideoCard, ...
   lib/            theme, content (pulled from jerkvest.com), analytics, links
-supabase/         analytics schema + edge function
+supabase/         analytics schema + token-gated summary function
 ```

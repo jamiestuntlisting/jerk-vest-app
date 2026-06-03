@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { analyticsConfigured, ANALYTICS_FN_URL } from '@/lib/supabase';
+import { analyticsConfigured } from '@/lib/supabase';
 import { fetchAnalytics, type AnalyticsSummary } from '@/lib/analytics';
 import { colors, fonts, glow, rgba, space } from '@/lib/theme';
 
@@ -43,7 +43,7 @@ export default function AdminScreen() {
   const [data, setData] = useState<AnalyticsSummary | null>(null);
 
   const load = useCallback(async (t: string) => {
-    if (!analyticsConfigured || !ANALYTICS_FN_URL) {
+    if (!analyticsConfigured) {
       setStatus('unconfigured');
       return;
     }

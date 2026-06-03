@@ -29,8 +29,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { colors, rgba } from '@/lib/theme';
+import { BG_VIDEO_URL } from '@/lib/config';
 
-const BG_VIDEO = process.env.EXPO_PUBLIC_BG_VIDEO_URL;
+const BG_VIDEO = BG_VIDEO_URL;
 
 function Bloom({
   progress,
