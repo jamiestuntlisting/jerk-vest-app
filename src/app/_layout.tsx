@@ -15,6 +15,7 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { PermanentMarker_400Regular } from '@expo-google-fonts/permanent-marker';
 
 import BackgroundFX from '@/components/BackgroundFX';
 import DvdFrame from '@/components/DvdFrame';
@@ -41,6 +42,7 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    PermanentMarker_400Regular,
   });
 
   // Render once fonts load — or if they fail, so a font CDN hiccup can never

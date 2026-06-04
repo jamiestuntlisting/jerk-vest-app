@@ -1,83 +1,72 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useReducedMotion } from 'react-native-reanimated';
 
 import JerkVestLogo from '@/components/JerkVestLogo';
-import MenuTile from '@/components/MenuTile';
+import FeaturedHero from '@/components/FeaturedHero';
+import MiniTape from '@/components/MiniTape';
+import VhsPlayer from '@/components/VhsPlayer';
 import { SpecialFeaturesBar, DvdVideoMark } from '@/components/Chrome';
-import { MENU, INSTAGRAM_LINK } from '@/lib/content';
+import { FEATURED, SHELF, SOCIALS } from '@/lib/content';
+import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
-import { colors, fonts, glow, rgba, space } from '@/lib/theme';
+import { colors, fonts, space } from '@/lib/theme';
 
 export default function MenuScreen() {
-  const reduced = !!useReducedMotion();
-  const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(false);
 
-  // Cycle the highlight through the tiles like a DVD remote selection.
-  useEffect(() => {
-    if (reduced) {
-      setActive(-1);
-      return;
-    }
-    const id = setInterval(() => setActive((i) => (i + 1) % MENU.length), 1900);
-    return () => clearInterval(id);
-  }, [reduced]);
+  const play = () => {
+    track('video_play', { label: FEATURED.youtubeId, meta: { title: FEATURED.title, area: 'hero' } });
+    setPlaying(true);
+  };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      {/* Whole menu fits one screen — no ScrollView. The grid flexes to fill. */}
-      <View style={styles.container}>
-        <SpecialFeaturesBar />
+    <View style={styles.root}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.container}>
+          <View style={styles.logo}>
+            <JerkVestLogo size={0.5} showProductions={false} />
+          </View>
 
-        <View style={styles.logo}>
-          <JerkVestLogo size={0.58} />
-        </View>
+          <FeaturedHero featured={FEATURED} onPlay={play} />
 
-        <View style={styles.grid}>
-          {MENU.map((item, i) => (
-            <MenuTile key={item.key} item={item} index={i} active={active === i} />
-          ))}
-        </View>
+          <View style={styles.shelf}>
+            <SpecialFeaturesBar />
+            <View style={styles.shelfRow}>
+              {SHELF.map((item) => (
+                <MiniTape key={item.key} item={item} count={SHELF.length} />
+              ))}
+            </View>
+          </View>
 
-        <View style={styles.footer}>
-          <Pressable
-            onPress={() => openExternal(INSTAGRAM_LINK.url, 'instagram')}
-            style={({ pressed }) => [styles.ig, pressed && { opacity: 0.85 }]}>
-            <Text style={styles.igGlyph}>◉</Text>
-            <Text style={styles.igText}>FOLLOW {INSTAGRAM_LINK.handle}</Text>
-          </Pressable>
-          <DvdVideoMark />
+          <View style={styles.footer}>
+            <View style={styles.socials}>
+              {SOCIALS.map((s) => (
+                <Pressable key={s.key} onPress={() => openExternal(s.url, s.key)} hitSlop={8}>
+                  <Text style={styles.social}>{s.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <DvdVideoMark />
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+
+      {playing ? (
+        <VhsPlayer youtubeId={FEATURED.youtubeId} title={FEATURED.title} onClose={() => setPlaying(false)} />
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   safe: { flex: 1 },
-  container: {
-    flex: 1,
-    paddingHorizontal: space.lg,
-    paddingTop: space.sm,
-    paddingBottom: space.sm,
-  },
-  logo: { alignItems: 'center', marginVertical: space.sm },
-  grid: { flex: 1, width: '100%', gap: space.sm },
-  footer: { alignItems: 'center', gap: space.sm, marginTop: space.sm },
-  ig: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    width: '100%',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: rgba(colors.orange, 0.7),
-    backgroundColor: rgba(colors.orange, 0.12),
-    ...glow(colors.orange, 10, 0.4),
-  },
-  igGlyph: { color: colors.orange, fontSize: 18 },
-  igText: { fontFamily: fonts.heading, color: colors.orange, letterSpacing: 2.5, fontSize: 17 },
+  container: { flex: 1, paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
+  logo: { alignItems: 'center', marginTop: space.xs, marginBottom: space.xs },
+  shelf: { marginTop: space.sm },
+  shelfRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, marginTop: space.md },
+  footer: { alignItems: 'center', gap: space.sm, marginTop: space.md },
+  socials: { flexDirection: 'row', gap: space.xl },
+  social: { fontFamily: fonts.heading, color: colors.orangeLight, letterSpacing: 2, fontSize: 14 },
 });

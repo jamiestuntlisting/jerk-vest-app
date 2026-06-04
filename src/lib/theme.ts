@@ -46,6 +46,8 @@ export const fonts = {
   bodyMedium: 'Inter_500Medium',
   bodySemiBold: 'Inter_600SemiBold',
   bodyBold: 'Inter_700Bold',
+  /** Hand-scrawled marker, for VHS tape labels. */
+  marker: 'PermanentMarker_400Regular',
 } as const;
 
 export const space = {

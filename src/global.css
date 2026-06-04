@@ -73,6 +73,16 @@ body::after {
 }
 
 /* Respect reduced-motion: drop the animated overlays. */
+/* VHS static noise shuffle (used by the tape-insert transition). */
+@keyframes jv-noise {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 160px 90px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::after {
     animation: none;

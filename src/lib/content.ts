@@ -192,72 +192,34 @@ export const STUNTLISTING: Project = {
 
 export const PROJECTS: Project[] = [GORILLOLOGY, DODGE_BRICK, STUNTLISTING];
 
-/* ----------------------------------- Menu ----------------------------------- */
+/* ----------------------------------- Home ----------------------------------- */
 
-export type Avatar = { initials: string; url?: string; accent: 'purple' | 'orange' };
-
-export type MenuItem = {
-  key: string;
-  title: string;
-  blurb: string;
-  target: string;
-  kind: 'route' | 'external';
-  thumb?: string;
-  /** Render a monogram tile (e.g. "JV") instead of a photo. */
-  monoText?: string;
-  /** Render headshots instead of a thumbnail (About). */
-  avatars?: Avatar[];
+/** The hero "featured tape". Change this to swap what the home pushes — this is
+ *  the single value the native app's home will eventually read from the server,
+ *  so the menu can differ month to month / when a new film finishes. */
+export const FEATURED = {
+  projectKey: 'dodge-brick',
+  title: 'Dodge Brick',
+  ribbon: 'JUST DROPPED',
+  tagline: 'The latest from Jerk Vest',
+  youtubeId: 'ifg8wNuCd28',
 };
 
-/** Menu tiles. Short blurbs so the whole menu fits one screen (no scroll). */
-export const MENU: MenuItem[] = [
-  {
-    key: 'gorillology',
-    title: 'Gorillology',
-    blurb: 'The gorilla trilogy.',
-    target: '/gorillology',
-    kind: 'route',
-    thumb: yt('umJJp33Sv4c'),
-  },
-  {
-    key: 'dodge-brick',
-    title: 'Dodge Brick',
-    blurb: 'Our action short — out now.',
-    target: '/dodge-brick',
-    kind: 'route',
-    thumb: yt('ifg8wNuCd28'),
-  },
-  {
-    key: 'stuntlisting',
-    title: 'StuntListing',
-    blurb: 'Promos & our collab.',
-    target: '/stuntlisting',
-    kind: 'route',
-    thumb: yt('nyVyFMP1hpI'),
-  },
-  {
-    key: 'about',
-    title: 'About Us',
-    blurb: 'Who we are + contact.',
-    target: '/about',
-    kind: 'route',
-    avatars: [
-      { initials: 'NM', url: HEADSHOT_NICK_URL || undefined, accent: 'purple' },
-      { initials: 'JN', url: HEADSHOT_JAMIE_URL || undefined, accent: 'orange' },
-    ],
-  },
-  {
-    key: 'shop',
-    title: 'Shop',
-    blurb: 'Official merch & apparel.',
-    target: SITE.shop,
-    kind: 'external',
-    monoText: 'JV',
-  },
+export type ShelfItem = { key: string; title: string; target: string; kind: 'route' | 'external' };
+
+/** Secondary "tapes" on the shelf — deliberately quieter than the hero. */
+export const SHELF: ShelfItem[] = [
+  { key: 'gorillology', title: 'Gorillology', target: '/gorillology', kind: 'route' },
+  { key: 'stuntlisting', title: 'StuntListing', target: '/stuntlisting', kind: 'route' },
+  { key: 'shop', title: 'Shop', target: SITE.shop, kind: 'external' },
+  { key: 'about', title: 'About', target: '/about', kind: 'route' },
 ];
 
-/** Instagram is a standalone link at the bottom of the menu. */
-export const INSTAGRAM_LINK = { url: SITE.instagram, handle: '@JERKVEST' };
+/** Tertiary social links (footer). */
+export const SOCIALS = [
+  { key: 'instagram', label: 'INSTAGRAM', url: SITE.instagram },
+  { key: 'youtube', label: 'YOUTUBE', url: SITE.youtube },
+];
 
 /* ----------------------------------- About ---------------------------------- */
 
