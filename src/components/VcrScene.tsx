@@ -33,7 +33,7 @@ export default function VcrScene({
   progress?: SharedValue<number>;
 }) {
   const W = width;
-  const tapeW = W * 0.5; // tape is half the screen width
+  const tapeW = W * 0.62; // the featured tape dominates the deck
   const tapeH = tapeW * 0.34;
   const pad = 8;
   const bezelH = tapeH * 0.55; // top brand strip

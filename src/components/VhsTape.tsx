@@ -1,8 +1,10 @@
 /**
- * A VHS cassette drawn with views, shown along its spine: a chunky horizontal
- * slab whose big top label is simply the movie title (hand-scrawled), with a
- * slim plastic front edge. No reels — that's what separates a VHS from an audio
- * cassette. Scales by `width`.
+ * The featured VHS, shown along its spine: a chunky horizontal slab whose big
+ * top label is the movie title (hand-scrawled), with a slim plastic front edge.
+ * No reels — that's what separates a VHS from an audio cassette.
+ *
+ * The title font is sized to fit on one line (react-native-web ignores
+ * adjustsFontSizeToFit, so we compute it ourselves) — names never truncate.
  */
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,15 +14,15 @@ export default function VhsTape({
   title,
   width,
   accent = colors.orange,
-  compact = false,
 }: {
   title: string;
   width: number;
   accent?: string;
-  compact?: boolean;
 }) {
   const H = width * 0.34;
   const r = H * 0.14;
+  const labelInner = width * 0.82;
+  const titleSize = Math.min(H * 0.5, labelInner / (Math.max(title.length, 1) * 0.62));
 
   return (
     <View style={{ width, height: H }}>
@@ -29,17 +31,9 @@ export default function VhsTape({
       <View style={[styles.sheen, { borderTopLeftRadius: r, borderTopRightRadius: r }]} />
 
       {/* spine label — the movie title */}
-      <View
-        style={[
-          styles.label,
-          { top: H * 0.12, left: width * 0.05, right: width * 0.05, bottom: H * 0.32, paddingHorizontal: width * 0.05, paddingTop: H * 0.05 },
-        ]}>
+      <View style={[styles.label, { top: H * 0.12, left: width * 0.05, right: width * 0.05, bottom: H * 0.32, paddingHorizontal: width * 0.04, paddingTop: H * 0.05 }]}>
         <View style={[styles.stripe, { backgroundColor: accent }]} />
-        <Text
-          style={[styles.title, { fontSize: H * (compact ? 0.5 : 0.42) }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.4}>
+        <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={1}>
           {title}
         </Text>
       </View>
