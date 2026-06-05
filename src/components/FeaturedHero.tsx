@@ -41,7 +41,7 @@ export default function FeaturedHero({
     };
   }, [breathe, pulse, reduced]);
 
-  const tapeW = Math.min(width * 0.78, 300);
+  const tapeW = Math.min(width * 0.84, 330);
 
   const breatheStyle = useAnimatedStyle(() => ({
     transform: [{ scale: reduced ? 1 : interpolate(breathe.value, [0, 1], [1, 1.035]) }],

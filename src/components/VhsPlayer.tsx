@@ -1,13 +1,15 @@
 /**
  * The play ritual. Tapping the featured tape opens this full-screen overlay:
- *   1. inserting — the tape slides down into a VCR slot (~1s)
- *   2. static    — VHS tracking static + "PLAY" OSD (~1s)
- *   3. playing   — the film (inline YouTube on web; opens externally on native)
+ *   1. insert — the VHS slides down into the VCR, then a plastic door swings
+ *               shut over the slot to block it (~1s)
+ *   2. static — VHS tracking static + "PLAY" OSD (~1s)
+ *   3. play   — the film (inline YouTube on web; opens externally on native)
  */
 import { createElement, useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing,
+  Extrapolation,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -19,19 +21,7 @@ import VhsStatic from '@/components/VhsStatic';
 import { openExternal } from '@/lib/links';
 import { colors, fonts, fill, glow, rgba } from '@/lib/theme';
 
-type Phase = 'inserting' | 'static' | 'playing';
-
-function VcrSlot() {
-  return (
-    <View style={styles.vcr}>
-      <View style={styles.vcrSlot} />
-      <View style={styles.vcrRow}>
-        <View style={styles.led} />
-        <Text style={styles.vcrText}>JERK VEST  HiFi  STEREO</Text>
-      </View>
-    </View>
-  );
-}
+type Phase = 'insert' | 'static' | 'play';
 
 function YouTube({ id }: { id: string }) {
   return createElement('iframe', {
@@ -51,45 +41,60 @@ export default function VhsPlayer({
   title: string;
   onClose: () => void;
 }) {
-  const [phase, setPhase] = useState<Phase>('inserting');
+  const [phase, setPhase] = useState<Phase>('insert');
+  const { width } = useWindowDimensions();
   const ins = useSharedValue(0);
 
+  const stageW = Math.min(width - 32, 320);
+  const tapeW = stageW - 20;
+
   useEffect(() => {
-    ins.value = withTiming(1, { duration: 900, easing: Easing.in(Easing.cubic) });
-    const t1 = setTimeout(() => setPhase('static'), 950);
+    ins.value = withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) });
+    const t1 = setTimeout(() => setPhase('static'), 1050);
     const t2 = setTimeout(() => {
       if (Platform.OS === 'web') {
-        setPhase('playing');
+        setPhase('play');
       } else {
         void openExternal(`https://www.youtube.com/watch?v=${youtubeId}`, youtubeId);
         onClose();
       }
-    }, 1850);
+    }, 1950);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, [ins, youtubeId, onClose]);
 
+  // VHS lowers into the slot, then fades behind the unit.
   const tapeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(ins.value, [0, 0.6], [0, 150], Extrapolation.CLAMP) }],
+    opacity: interpolate(ins.value, [0.5, 0.66], [1, 0], Extrapolation.CLAMP),
+  }));
+  // Plastic door swings down (rotateX 92°→0°) to block the slot once the tape is in.
+  const doorStyle = useAnimatedStyle(() => ({
     transform: [
-      { perspective: 700 },
-      { translateY: interpolate(ins.value, [0, 1], [0, 150]) },
-      { scale: interpolate(ins.value, [0, 1], [1, 0.62]) },
-      { rotateX: `${interpolate(ins.value, [0, 1], [0, 72])}deg` },
+      { perspective: 600 },
+      { rotateX: `${interpolate(ins.value, [0.6, 1], [92, 0], Extrapolation.CLAMP)}deg` },
     ],
-    opacity: interpolate(ins.value, [0, 0.75, 1], [1, 1, 0]),
   }));
 
   return (
     <View style={styles.overlay}>
-      {phase === 'inserting' ? (
-        <View style={styles.insertStage}>
-          <Animated.View style={tapeStyle}>
-            <VhsTape title={title} width={210} />
+      {phase === 'insert' ? (
+        <View style={[styles.stage, { width: stageW }]}>
+          <Animated.View style={[styles.tapeFloat, tapeStyle]}>
+            <VhsTape title={title} width={tapeW} />
           </Animated.View>
-          <View style={styles.slotWrap}>
-            <VcrSlot />
+
+          <View style={[styles.vcr, { width: stageW }]}>
+            <View style={styles.vcrFace}>
+              <View style={styles.slotMouth} />
+              <Animated.View style={[styles.vcrDoor, doorStyle]} />
+            </View>
+            <View style={styles.vcrRow}>
+              <View style={styles.led} />
+              <Text style={styles.vcrText}>JERK VEST  HiFi  STEREO</Text>
+            </View>
           </View>
         </View>
       ) : null}
@@ -104,7 +109,7 @@ export default function VhsPlayer({
         </View>
       ) : null}
 
-      {phase === 'playing' ? <View style={styles.film}>{youtubeId ? <YouTube id={youtubeId} /> : null}</View> : null}
+      {phase === 'play' ? <View style={styles.film}>{youtubeId ? <YouTube id={youtubeId} /> : null}</View> : null}
 
       <Pressable onPress={onClose} hitSlop={12} style={styles.close} accessibilityLabel="Close">
         <Text style={styles.closeText}>✕</Text>
@@ -115,20 +120,33 @@ export default function VhsPlayer({
 
 const styles = StyleSheet.create({
   overlay: { ...fill, backgroundColor: '#000', zIndex: 200, alignItems: 'center', justifyContent: 'center' },
-  insertStage: { ...fill, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  slotWrap: { position: 'absolute', bottom: '30%', width: '100%', alignItems: 'center' },
-  vcr: {
-    width: 260,
+  stage: { height: 300, justifyContent: 'flex-end' },
+  tapeFloat: { position: 'absolute', top: 10, left: 10, right: 10, alignItems: 'center' },
+  vcr: { position: 'absolute', bottom: 0, alignItems: 'center' },
+  vcrFace: {
+    width: '100%',
+    height: 74,
     backgroundColor: '#15131a',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: rgba(colors.purpleLight, 0.3),
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    ...glow(colors.purpleDark, 16, 0.5),
+    overflow: 'hidden',
+    ...glow(colors.purpleDark, 18, 0.5),
   },
-  vcrSlot: { height: 12, borderRadius: 3, backgroundColor: '#000', borderWidth: 1, borderColor: '#2a2533' },
-  vcrRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  slotMouth: { position: 'absolute', top: 16, left: 22, right: 22, height: 15, backgroundColor: '#000', borderRadius: 3, borderWidth: 1, borderColor: '#2a2533' },
+  vcrDoor: {
+    position: 'absolute',
+    top: 16,
+    left: 22,
+    right: 22,
+    height: 15,
+    backgroundColor: '#26222e',
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: rgba(colors.white, 0.12),
+    transformOrigin: '50% 0%',
+  },
+  vcrRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   led: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.orange, ...glow(colors.orange, 6, 0.9) },
   vcrText: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.6), letterSpacing: 2, fontSize: 11 },
   osd: { position: 'absolute', top: '12%', left: '8%' },
