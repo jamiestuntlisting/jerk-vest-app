@@ -88,8 +88,8 @@ export default function VcrScene({
     return {
       transform: [
         { translateY: interpolate(p, [0, 0.6], [0, slideDist], Extrapolation.CLAMP) },
-        { translateX: interpolate(wig.value, [-1, 1], [-3, 3]) * amp },
-        { rotateZ: `${interpolate(wig.value, [-1, 1], [-2.5, 2.5]) * amp}deg` },
+        { translateX: interpolate(wig.value, [-1, 1], [-1.5, 1.5]) * amp },
+        { rotateZ: `${interpolate(wig.value, [-1, 1], [-1.25, 1.25]) * amp}deg` },
       ],
     };
   });
