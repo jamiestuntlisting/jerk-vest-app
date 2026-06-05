@@ -203,22 +203,25 @@ export const FEATURED = {
   ribbon: 'JUST DROPPED',
   tagline: 'The latest from Jerk Vest',
   youtubeId: 'ifg8wNuCd28',
+  accent: '#FF4D2A',
 };
 
-export type ShelfItem = { key: string; title: string; target: string; kind: 'route' | 'external' };
+export type Tape = { key: string; title: string; target: string; kind: 'route' | 'external'; accent: string };
 
-/** Secondary "tapes" on the shelf — deliberately quieter than the hero. */
-export const SHELF: ShelfItem[] = [
-  { key: 'gorillology', title: 'Gorillology', target: '/gorillology', kind: 'route' },
-  { key: 'stuntlisting', title: 'StuntListing', target: '/stuntlisting', kind: 'route' },
-  { key: 'shop', title: 'Shop', target: SITE.shop, kind: 'external' },
-  { key: 'about', title: 'About', target: '/about', kind: 'route' },
+/** The other videos, each as its own VHS tape on the shelf. */
+export const CATALOG: Tape[] = [
+  { key: 'gorillology', title: 'Gorillology', target: '/gorillology', kind: 'route', accent: '#B45FD6' },
+  { key: 'stuntlisting', title: 'StuntListing', target: '/stuntlisting', kind: 'route', accent: '#5AA9E6' },
 ];
 
-/** Tertiary social links (footer). */
-export const SOCIALS = [
-  { key: 'instagram', label: 'INSTAGRAM', url: SITE.instagram },
-  { key: 'youtube', label: 'YOUTUBE', url: SITE.youtube },
+export type FooterLink = { key: string; label: string; target: string; kind: 'route' | 'external' };
+
+/** Tertiary links (footer): shop, about, socials. */
+export const FOOTER_LINKS: FooterLink[] = [
+  { key: 'shop', label: 'SHOP', target: SITE.shop, kind: 'external' },
+  { key: 'about', label: 'ABOUT', target: '/about', kind: 'route' },
+  { key: 'instagram', label: 'INSTAGRAM', target: SITE.instagram, kind: 'external' },
+  { key: 'youtube', label: 'YOUTUBE', target: SITE.youtube, kind: 'external' },
 ];
 
 /* ----------------------------------- About ---------------------------------- */

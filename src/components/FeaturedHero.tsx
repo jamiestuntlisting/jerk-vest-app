@@ -1,7 +1,6 @@
 /**
- * The home's focal point: the featured film as a big VHS tape with a
- * "JUST DROPPED" ribbon, a breathing glow, and a pulsing PRESS PLAY prompt.
- * It is the only thing on the home that animates for attention.
+ * The home's focal point: the featured film seated in a VCR as a VHS, with a
+ * pulsing PRESS PLAY. Tapping hands off to the full-screen player.
  */
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -16,14 +15,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import VhsTape from '@/components/VhsTape';
-import { colors, fonts, glow, rgba } from '@/lib/theme';
+import VcrScene from '@/components/VcrScene';
+import { colors, fonts, glow } from '@/lib/theme';
 
 export default function FeaturedHero({
   featured,
   onPlay,
 }: {
-  featured: { title: string; ribbon: string; tagline: string };
+  featured: { title: string; ribbon: string; tagline: string; accent: string };
   onPlay: () => void;
 }) {
   const { width } = useWindowDimensions();
@@ -33,7 +32,7 @@ export default function FeaturedHero({
 
   useEffect(() => {
     if (reduced) return;
-    breathe.value = withRepeat(withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.sin) }), -1, true);
+    breathe.value = withRepeat(withTiming(1, { duration: 3400, easing: Easing.inOut(Easing.sin) }), -1, true);
     pulse.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.quad) }), -1, true);
     return () => {
       cancelAnimation(breathe);
@@ -41,10 +40,10 @@ export default function FeaturedHero({
     };
   }, [breathe, pulse, reduced]);
 
-  const tapeW = Math.min(width * 0.84, 330);
+  const vcrW = Math.min(width * 0.9, 360);
 
   const breatheStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: reduced ? 1 : interpolate(breathe.value, [0, 1], [1, 1.035]) }],
+    transform: [{ scale: reduced ? 1 : interpolate(breathe.value, [0, 1], [1, 1.015]) }],
   }));
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: reduced ? 1 : interpolate(pulse.value, [0, 1], [0.85, 1]),
@@ -56,11 +55,8 @@ export default function FeaturedHero({
       <Text style={styles.eyebrow}>NOW PLAYING</Text>
 
       <Pressable onPress={onPlay} style={styles.press} accessibilityRole="button" accessibilityLabel={`Play ${featured.title}`}>
-        <Animated.View style={[styles.tapeWrap, breatheStyle, glow(colors.orange, 26, 0.35)]}>
-          <VhsTape title={featured.title} width={tapeW} />
-          <View style={styles.ribbon}>
-            <Text style={styles.ribbonText}>{featured.ribbon}</Text>
-          </View>
+        <Animated.View style={[breatheStyle, glow(colors.orange, 28, 0.28)]}>
+          <VcrScene width={vcrW} title={featured.title} accent={featured.accent} ribbon={featured.ribbon} />
         </Animated.View>
 
         <Animated.View style={[styles.playPill, pulseStyle]}>
@@ -68,7 +64,7 @@ export default function FeaturedHero({
           <Text style={styles.playText}>PRESS PLAY</Text>
         </Animated.View>
 
-        <Text style={styles.hint}>Insert tape to watch · {featured.tagline}</Text>
+        <Text style={styles.hint}>Push the tape in to watch · {featured.tagline}</Text>
       </Pressable>
     </View>
   );
@@ -76,21 +72,8 @@ export default function FeaturedHero({
 
 const styles = StyleSheet.create({
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
-  eyebrow: { fontFamily: fonts.heading, color: colors.purpleGlow, letterSpacing: 6, fontSize: 14, marginBottom: 14, ...glow(colors.purpleGlow, 8, 0.5) },
+  eyebrow: { fontFamily: fonts.heading, color: colors.purpleGlow, letterSpacing: 6, fontSize: 14, marginBottom: 16, ...glow(colors.purpleGlow, 8, 0.5) },
   press: { alignItems: 'center' },
-  tapeWrap: { borderRadius: 14 },
-  ribbon: {
-    position: 'absolute',
-    top: 8,
-    left: -6,
-    backgroundColor: colors.orange,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
-    transform: [{ rotate: '-7deg' }],
-    ...glow(colors.orange, 12, 0.7),
-  },
-  ribbonText: { fontFamily: fonts.heading, color: colors.white, letterSpacing: 2, fontSize: 14 },
   playPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -102,16 +85,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.orange,
     ...glow(colors.orange, 20, 0.8),
   },
-  playTri: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 9,
-    borderBottomWidth: 9,
-    borderLeftWidth: 15,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: colors.white,
-  },
+  playTri: { width: 0, height: 0, borderTopWidth: 9, borderBottomWidth: 9, borderLeftWidth: 15, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: colors.white },
   playText: { fontFamily: fonts.heading, color: colors.white, letterSpacing: 3, fontSize: 22 },
   hint: { fontFamily: fonts.bodyMedium, color: colors.textDim, fontSize: 12.5, marginTop: 12, textTransform: 'uppercase', letterSpacing: 1 },
 });
