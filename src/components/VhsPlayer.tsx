@@ -1,20 +1,15 @@
 /**
- * The play ritual. Tapping the featured tape opens this full-screen overlay:
- *   1. insert — the VHS pushes straight into the VCR slot, then the plastic
- *               door swings shut over it (~1.1s)
- *   2. static — VHS tracking static + "PLAY" OSD (~0.9s)
- *   3. play   — the film (inline YouTube on web; opens externally on native)
+ * Film overlay. By the time this mounts, the tape has already pushed into the
+ * VCR on the home screen — so this just fades in over it, shows a beat of VHS
+ * static, then plays the film (inline YouTube on web; external on native).
  */
 import { createElement, useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import VcrScene from '@/components/VcrScene';
 import VhsStatic from '@/components/VhsStatic';
 import { openExternal } from '@/lib/links';
-import { APP_MAX_WIDTH, colors, fonts, fill, glow, rgba } from '@/lib/theme';
-
-type Phase = 'insert' | 'static' | 'play';
+import { colors, fonts, fill, glow, rgba } from '@/lib/theme';
 
 function YouTube({ id }: { id: string }) {
   return createElement('iframe', {
@@ -25,47 +20,27 @@ function YouTube({ id }: { id: string }) {
   });
 }
 
-export default function VhsPlayer({
-  youtubeId,
-  title,
-  accent = colors.orange,
-  onClose,
-}: {
-  youtubeId: string;
-  title: string;
-  accent?: string;
-  onClose: () => void;
-}) {
-  const [phase, setPhase] = useState<Phase>('insert');
-  const { width } = useWindowDimensions();
-  const progress = useSharedValue(0);
-  const vcrW = Math.min(width, APP_MAX_WIDTH);
+export default function VhsPlayer({ youtubeId, onClose }: { youtubeId: string; onClose: () => void }) {
+  const [phase, setPhase] = useState<'static' | 'play'>('static');
+  const fade = useSharedValue(0);
 
   useEffect(() => {
-    progress.value = withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.cubic) });
-    const t1 = setTimeout(() => setPhase('static'), 1200);
-    const t2 = setTimeout(() => {
+    fade.value = withTiming(1, { duration: 280, easing: Easing.out(Easing.quad) });
+    const t = setTimeout(() => {
       if (Platform.OS === 'web') {
         setPhase('play');
       } else {
         void openExternal(`https://www.youtube.com/watch?v=${youtubeId}`, youtubeId);
         onClose();
       }
-    }, 2100);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [progress, youtubeId, onClose]);
+    }, 750);
+    return () => clearTimeout(t);
+  }, [fade, youtubeId, onClose]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
 
   return (
-    <View style={styles.overlay}>
-      {phase === 'insert' ? (
-        <View style={styles.stage}>
-          <VcrScene width={vcrW} title={title} accent={accent} progress={progress} />
-        </View>
-      ) : null}
-
+    <Animated.View style={[styles.overlay, fadeStyle]}>
       {phase === 'static' ? (
         <View style={fill}>
           <VhsStatic />
@@ -74,20 +49,19 @@ export default function VhsPlayer({
             <Text style={styles.osdSp}>SP  0:00:00</Text>
           </View>
         </View>
-      ) : null}
-
-      {phase === 'play' ? <View style={styles.film}>{youtubeId ? <YouTube id={youtubeId} /> : null}</View> : null}
+      ) : (
+        <View style={styles.film}>{youtubeId ? <YouTube id={youtubeId} /> : null}</View>
+      )}
 
       <Pressable onPress={onClose} hitSlop={12} style={styles.close} accessibilityLabel="Close">
         <Text style={styles.closeText}>✕</Text>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: { ...fill, backgroundColor: '#000', zIndex: 200, alignItems: 'center', justifyContent: 'center' },
-  stage: { alignItems: 'center', justifyContent: 'center' },
   osd: { position: 'absolute', top: '12%', left: '8%' },
   osdPlay: { fontFamily: fonts.heading, color: colors.white, fontSize: 30, letterSpacing: 3, ...glow(colors.white, 8, 0.5) },
   osdSp: { fontFamily: fonts.heading, color: rgba(colors.white, 0.85), fontSize: 16, letterSpacing: 2, marginTop: 4 },

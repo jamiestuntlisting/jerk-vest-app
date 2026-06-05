@@ -1,17 +1,26 @@
 /**
  * A front-on VCR with the featured VHS seated in its open slot, fully visible.
- * Full-bleed width; the tape is half the width and the deck is wide-and-short
- * like a real VCR, with the controls in the margins either side of the slot.
+ * Full-bleed width; the tape is the star and the deck is wide-and-short like a
+ * real VCR, with the controls in the margins either side of the slot.
  *
  * Drives the insert: pass a `progress` shared value (0→1) and the tape pushes
  * straight down into the slot, then the plastic door swings shut over it. With
- * no `progress` (the home), the tape just sits there, fully visible.
+ * `wiggle`, the idle tape does a periodic little shimmy to invite a tap.
  */
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
+  Easing,
   Extrapolation,
+  cancelAnimation,
   interpolate,
   useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,31 +34,64 @@ export default function VcrScene({
   accent = colors.orange,
   ribbon,
   progress,
+  wiggle = false,
 }: {
   width: number;
   title: string;
   accent?: string;
   ribbon?: string;
   progress?: SharedValue<number>;
+  wiggle?: boolean;
 }) {
   const W = width;
   const tapeW = W * 0.62; // the featured tape dominates the deck
   const tapeH = tapeW * 0.34;
   const pad = 8;
-  const bezelH = tapeH * 0.55; // top brand strip
-  const bottomH = tapeH * 0.8; // controls / label strip
+  const bezelH = tapeH * 0.55;
+  const bottomH = tapeH * 0.8;
   const tapeTop = bezelH + pad;
   const mouthY = tapeTop + tapeH;
   const Hv = mouthY + pad + bottomH;
   const clipTop = tapeTop - pad;
   const clipH = mouthY - clipTop;
   const slotLeft = (W - tapeW) / 2;
-  const side = slotLeft; // margin either side of the slot
+  const side = slotLeft;
   const slideDist = tapeH + 16;
+
+  const reduced = !!useReducedMotion();
+  const wig = useSharedValue(0);
+
+  useEffect(() => {
+    if (!wiggle || reduced) {
+      cancelAnimation(wig);
+      wig.value = 0;
+      return;
+    }
+    // quick shimmy, then a pause, repeating — an attention nudge
+    wig.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 90 }),
+        withTiming(-1, { duration: 180 }),
+        withTiming(1, { duration: 180 }),
+        withTiming(0, { duration: 90 }),
+        withDelay(2400, withTiming(0, { duration: 0 })),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(wig);
+  }, [wiggle, reduced, wig]);
 
   const tapeStyle = useAnimatedStyle(() => {
     const p = progress ? progress.value : 0;
-    return { transform: [{ translateY: interpolate(p, [0, 0.6], [0, slideDist], Extrapolation.CLAMP) }] };
+    const amp = 1 - Math.min(p * 4, 1); // wiggle fades out the moment insert starts
+    return {
+      transform: [
+        { translateY: interpolate(p, [0, 0.6], [0, slideDist], Extrapolation.CLAMP) },
+        { translateX: interpolate(wig.value, [-1, 1], [-3, 3]) * amp },
+        { rotateZ: `${interpolate(wig.value, [-1, 1], [-2.5, 2.5]) * amp}deg` },
+      ],
+    };
   });
   const flapStyle = useAnimatedStyle(() => {
     const p = progress ? progress.value : 0;
@@ -81,7 +123,7 @@ export default function VcrScene({
       </View>
 
       {/* dark slot compartment (behind the tape) */}
-      <View style={[styles.recess, { left: slotLeft - 6, width: tapeW + 12, top: clipTop - 4, height: clipH + 8 }]} />
+      <View style={[styles.recess, { left: slotLeft - 12, width: tapeW + 24, top: clipTop - 4, height: clipH + 8 }]} />
 
       {/* left controls */}
       <View style={[styles.leftCol, { left: W * 0.05, top: tapeTop + tapeH * 0.08, gap: tapeH * 0.16 }]}>
@@ -114,8 +156,8 @@ export default function VcrScene({
         </Text>
       </View>
 
-      {/* featured tape, clipped into the slot */}
-      <View style={{ position: 'absolute', left: slotLeft, top: clipTop, width: tapeW, height: clipH, overflow: 'hidden', justifyContent: 'flex-end' }}>
+      {/* featured tape, clipped into the slot (extra side room so the wiggle never clips) */}
+      <View style={{ position: 'absolute', left: slotLeft - 8, top: clipTop, width: tapeW + 16, height: clipH, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
         <Animated.View style={tapeStyle}>
           <VhsTape title={title} width={tapeW} accent={accent} />
         </Animated.View>

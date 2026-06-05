@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Easing, runOnJS, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import JerkVestLogo from '@/components/JerkVestLogo';
 import FeaturedHero from '@/components/FeaturedHero';
@@ -12,13 +13,27 @@ import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
 import { colors, fonts, space } from '@/lib/theme';
 
+type Phase = 'idle' | 'inserting' | 'watching';
+
 export default function MenuScreen() {
   const router = useRouter();
-  const [playing, setPlaying] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const progress = useSharedValue(0);
 
-  const play = () => {
+  const startPlay = () => {
+    if (phase !== 'idle') return;
     track('video_play', { label: FEATURED.youtubeId, meta: { title: FEATURED.title, area: 'hero' } });
-    setPlaying(true);
+    setPhase('inserting');
+    // push the tape in right here on the home screen, then hand off to the film
+    progress.value = withTiming(1, { duration: 950, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+      'worklet';
+      if (finished) runOnJS(setPhase)('watching');
+    });
+  };
+
+  const closePlay = () => {
+    setPhase('idle');
+    progress.value = 0; // eject — tape sits back in the open slot
   };
 
   return (
@@ -29,7 +44,7 @@ export default function MenuScreen() {
             <JerkVestLogo size={0.46} showProductions={false} />
           </View>
 
-          <FeaturedHero featured={FEATURED} onPlay={play} />
+          <FeaturedHero featured={FEATURED} progress={progress} idle={phase === 'idle'} onPlay={startPlay} />
 
           <TapeStack />
 
@@ -50,9 +65,7 @@ export default function MenuScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {playing ? (
-        <VhsPlayer youtubeId={FEATURED.youtubeId} title={FEATURED.title} accent={FEATURED.accent} onClose={() => setPlaying(false)} />
-      ) : null}
+      {phase === 'watching' ? <VhsPlayer youtubeId={FEATURED.youtubeId} onClose={closePlay} /> : null}
     </View>
   );
 }
