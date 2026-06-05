@@ -1,7 +1,8 @@
 /**
  * A VHS cassette drawn with views, shown along its spine: a chunky horizontal
- * slab with a big top label (hand-scrawled title) and a slim plastic front edge.
- * No reels — that's what separates a VHS from an audio cassette. Scales by `width`.
+ * slab whose big top label is simply the movie title (hand-scrawled), with a
+ * slim plastic front edge. No reels — that's what separates a VHS from an audio
+ * cassette. Scales by `width`.
  */
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,24 +28,20 @@ export default function VhsTape({
       <LinearGradient colors={['#2b2438', '#0c0a12']} start={{ x: 0.2, y: 0 }} end={{ x: 0.85, y: 1 }} style={[fill, styles.shell, { borderRadius: r }]} />
       <View style={[styles.sheen, { borderTopLeftRadius: r, borderTopRightRadius: r }]} />
 
-      {/* big spine label */}
+      {/* spine label — the movie title */}
       <View
         style={[
           styles.label,
-          { top: H * 0.12, left: width * 0.05, right: width * 0.05, bottom: H * 0.32, paddingHorizontal: width * 0.045 },
+          { top: H * 0.12, left: width * 0.05, right: width * 0.05, bottom: H * 0.32, paddingHorizontal: width * 0.05, paddingTop: H * 0.05 },
         ]}>
-        {!compact ? (
-          <View style={styles.labelTop}>
-            <Text style={[styles.brand, { fontSize: H * 0.13 }]} numberOfLines={1}>
-              JERK VEST
-            </Text>
-            <Text style={[styles.vhs, { fontSize: H * 0.13, color: accent }]}>VHS</Text>
-          </View>
-        ) : null}
-        <Text style={[styles.title, { fontSize: H * (compact ? 0.42 : 0.32) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+        <View style={[styles.stripe, { backgroundColor: accent }]} />
+        <Text
+          style={[styles.title, { fontSize: H * (compact ? 0.5 : 0.42) }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.4}>
           {title}
         </Text>
-        <View style={[styles.rule, { backgroundColor: rgba(accent, 0.85) }]} />
       </View>
 
       {/* slim plastic front edge (the flap) */}
@@ -64,14 +61,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#efe7d6',
     borderRadius: 3,
     transform: [{ rotate: '-1deg' }],
+    alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  labelTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  brand: { fontFamily: fonts.heading, color: '#6b2d8b', letterSpacing: 1 },
-  vhs: { fontFamily: fonts.heading, letterSpacing: 1 },
-  title: { fontFamily: fonts.marker, color: '#171318', transform: [{ rotate: '-1deg' }] },
-  rule: { height: 2, borderRadius: 2, marginTop: 2 },
+  stripe: { position: 'absolute', top: 0, left: 0, right: 0, height: '20%' },
+  title: { fontFamily: fonts.marker, color: '#171318', textAlign: 'center', transform: [{ rotate: '-1deg' }] },
   lip: {
     position: 'absolute',
     bottom: 0,
