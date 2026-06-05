@@ -1,8 +1,11 @@
 /**
  * A front-on VCR with the featured VHS seated in its open slot, fully visible.
+ * Full-bleed width; the tape is half the width and the deck is wide-and-short
+ * like a real VCR, with the controls in the margins either side of the slot.
+ *
  * Drives the insert: pass a `progress` shared value (0→1) and the tape pushes
- * straight down into the slot, then the plastic door swings shut over it.
- * With no `progress` (the home), the tape just sits there, fully visible.
+ * straight down into the slot, then the plastic door swings shut over it. With
+ * no `progress` (the home), the tape just sits there, fully visible.
  */
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -30,14 +33,18 @@ export default function VcrScene({
   progress?: SharedValue<number>;
 }) {
   const W = width;
-  const Hv = W * 0.5;
-  const tapeW = W * 0.5;
+  const tapeW = W * 0.5; // tape is half the screen width
   const tapeH = tapeW * 0.34;
-  const mouthY = Hv * 0.62; // tape rest bottom / slot mouth line
-  const tapeTop = mouthY - tapeH;
-  const clipTop = tapeTop - 8;
+  const pad = 8;
+  const bezelH = tapeH * 0.55; // top brand strip
+  const bottomH = tapeH * 0.8; // controls / label strip
+  const tapeTop = bezelH + pad;
+  const mouthY = tapeTop + tapeH;
+  const Hv = mouthY + pad + bottomH;
+  const clipTop = tapeTop - pad;
   const clipH = mouthY - clipTop;
   const slotLeft = (W - tapeW) / 2;
+  const side = slotLeft; // margin either side of the slot
   const slideDist = tapeH + 16;
 
   const tapeStyle = useAnimatedStyle(() => {
@@ -58,17 +65,17 @@ export default function VcrScene({
   return (
     <View style={{ width: W, height: Hv }}>
       {/* body */}
-      <LinearGradient colors={['#2a2433', '#0b0910']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[fill, styles.body, { borderRadius: W * 0.04 }]} />
-      <View style={[styles.sheen, { borderTopLeftRadius: W * 0.04, borderTopRightRadius: W * 0.04 }]} />
+      <LinearGradient colors={['#2a2433', '#0b0910']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[fill, styles.body, { borderRadius: tapeH * 0.16 }]} />
+      <View style={[styles.sheen, { borderTopLeftRadius: tapeH * 0.16, borderTopRightRadius: tapeH * 0.16, height: bezelH }]} />
 
       {/* top bezel: brand + vents */}
-      <View style={[styles.bezel, { top: Hv * 0.06, left: W * 0.06, right: W * 0.06 }]}>
-        <Text style={[styles.brand, { fontSize: Hv * 0.085 }]} numberOfLines={1}>
+      <View style={[styles.bezel, { top: bezelH * 0.24, height: bezelH * 0.6, left: W * 0.05, right: W * 0.05 }]}>
+        <Text style={[styles.brand, { fontSize: bezelH * 0.46 }]} numberOfLines={1}>
           JERK VEST
         </Text>
         <View style={styles.vents}>
           {[0, 1, 2].map((i) => (
-            <View key={i} style={[styles.vent, { width: W * 0.05 }]} />
+            <View key={i} style={[styles.vent, { width: side * 0.35 }]} />
           ))}
         </View>
       </View>
@@ -77,19 +84,19 @@ export default function VcrScene({
       <View style={[styles.recess, { left: slotLeft - 6, width: tapeW + 12, top: clipTop - 4, height: clipH + 8 }]} />
 
       {/* left controls */}
-      <View style={[styles.leftCol, { left: W * 0.05, top: Hv * 0.36 }]}>
-        <View style={[styles.btn, { width: W * 0.11 }]}>
+      <View style={[styles.leftCol, { left: W * 0.05, top: tapeTop + tapeH * 0.08, gap: tapeH * 0.16 }]}>
+        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.26 }]}>
           <Text style={styles.btnLabel}>PWR</Text>
         </View>
-        <View style={[styles.btn, { width: W * 0.11 }]}>
+        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.26 }]}>
           <Text style={styles.btnLabel}>EJECT</Text>
         </View>
       </View>
 
       {/* right controls: jog dial + transport */}
-      <View style={[styles.rightCol, { right: W * 0.05, top: Hv * 0.3 }]}>
-        <View style={[styles.jog, { width: W * 0.15, height: W * 0.15, borderRadius: W * 0.075 }]}>
-          <View style={[styles.jogHub, { width: W * 0.055, height: W * 0.055, borderRadius: W * 0.0275 }]} />
+      <View style={[styles.rightCol, { right: W * 0.05, top: tapeTop, gap: tapeH * 0.14 }]}>
+        <View style={[styles.jog, { width: side * 0.6, height: side * 0.6, borderRadius: side * 0.3 }]}>
+          <View style={[styles.jogHub, { width: side * 0.22, height: side * 0.22, borderRadius: side * 0.11 }]} />
         </View>
         <View style={styles.playRow}>
           <View style={styles.playTri} />
@@ -98,11 +105,11 @@ export default function VcrScene({
       </View>
 
       {/* bottom: display + label */}
-      <View style={[styles.bottom, { left: W * 0.06, right: W * 0.06, bottom: Hv * 0.07 }]}>
+      <View style={[styles.bottom, { left: W * 0.05, right: W * 0.05, top: mouthY + pad, height: bottomH - pad }]}>
         <View style={styles.display}>
-          <Text style={[styles.displayText, { fontSize: Hv * 0.07 }]}>SP  0:00</Text>
+          <Text style={[styles.displayText, { fontSize: bottomH * 0.32 }]}>SP  0:00</Text>
         </View>
-        <Text style={[styles.vcrLabel, { fontSize: Hv * 0.058 }]} numberOfLines={1}>
+        <Text style={[styles.vcrLabel, { fontSize: bottomH * 0.28 }]} numberOfLines={1}>
           VIDEO CASSETTE RECORDER
         </Text>
       </View>
@@ -132,16 +139,16 @@ export default function VcrScene({
 
 const styles = StyleSheet.create({
   body: { borderWidth: 1, borderColor: rgba(colors.purpleLight, 0.25) },
-  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '20%', backgroundColor: rgba(colors.white, 0.04) },
+  sheen: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: rgba(colors.white, 0.04) },
   bezel: { position: 'absolute', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.55), letterSpacing: 2 },
   vents: { flexDirection: 'row', gap: 4 },
   vent: { height: 2, borderRadius: 2, backgroundColor: rgba(colors.white, 0.1) },
   recess: { position: 'absolute', backgroundColor: '#05040a', borderRadius: 6, borderWidth: 1, borderColor: '#000' },
-  leftCol: { position: 'absolute', gap: 8 },
-  btn: { height: 14, borderRadius: 3, backgroundColor: '#1a1622', borderWidth: 1, borderColor: rgba(colors.white, 0.08), alignItems: 'center', justifyContent: 'center' },
-  btnLabel: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.5), fontSize: 7, letterSpacing: 1 },
-  rightCol: { position: 'absolute', alignItems: 'center', gap: 8 },
+  leftCol: { position: 'absolute' },
+  btn: { borderRadius: 3, backgroundColor: '#1a1622', borderWidth: 1, borderColor: rgba(colors.white, 0.08), alignItems: 'center', justifyContent: 'center' },
+  btnLabel: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.5), fontSize: 8, letterSpacing: 1 },
+  rightCol: { position: 'absolute', alignItems: 'center' },
   jog: { backgroundColor: '#15121c', borderWidth: 1, borderColor: rgba(colors.white, 0.1), alignItems: 'center', justifyContent: 'center' },
   jogHub: { backgroundColor: '#2a2435', borderWidth: 1, borderColor: rgba(colors.white, 0.08) },
   playRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

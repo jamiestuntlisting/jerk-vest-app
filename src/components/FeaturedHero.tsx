@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import VcrScene from '@/components/VcrScene';
-import { colors, fonts, glow } from '@/lib/theme';
+import { APP_MAX_WIDTH, colors, fonts, glow } from '@/lib/theme';
 
 export default function FeaturedHero({
   featured,
@@ -40,7 +40,7 @@ export default function FeaturedHero({
     };
   }, [breathe, pulse, reduced]);
 
-  const vcrW = Math.min(width * 0.9, 360);
+  const vcrW = Math.min(width, APP_MAX_WIDTH);
 
   const breatheStyle = useAnimatedStyle(() => ({
     transform: [{ scale: reduced ? 1 : interpolate(breathe.value, [0, 1], [1, 1.015]) }],
@@ -71,7 +71,7 @@ export default function FeaturedHero({
 }
 
 const styles = StyleSheet.create({
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
+  hero: { alignItems: 'center', justifyContent: 'center', width: '100%' },
   eyebrow: { fontFamily: fonts.heading, color: colors.purpleGlow, letterSpacing: 6, fontSize: 14, marginBottom: 16, ...glow(colors.purpleGlow, 8, 0.5) },
   press: { alignItems: 'center' },
   playPill: {

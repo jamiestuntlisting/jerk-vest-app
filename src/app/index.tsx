@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -24,7 +24,7 @@ export default function MenuScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.logo}>
             <JerkVestLogo size={0.46} showProductions={false} />
           </View>
@@ -47,7 +47,7 @@ export default function MenuScreen() {
               </Pressable>
             ))}
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
 
       {playing ? (
@@ -60,8 +60,8 @@ export default function MenuScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
-  container: { flex: 1, paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
-  logo: { alignItems: 'center', marginTop: space.xs, marginBottom: space.xs },
-  footer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: space.lg, rowGap: space.xs, marginTop: space.md },
+  scroll: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: space.lg, gap: space.lg },
+  logo: { alignItems: 'center' },
+  footer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: space.lg, rowGap: space.xs, paddingHorizontal: space.lg },
   footerLink: { fontFamily: fonts.heading, color: colors.orangeLight, letterSpacing: 2, fontSize: 13 },
 });

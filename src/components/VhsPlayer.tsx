@@ -12,7 +12,7 @@ import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 import VcrScene from '@/components/VcrScene';
 import VhsStatic from '@/components/VhsStatic';
 import { openExternal } from '@/lib/links';
-import { colors, fonts, fill, glow, rgba } from '@/lib/theme';
+import { APP_MAX_WIDTH, colors, fonts, fill, glow, rgba } from '@/lib/theme';
 
 type Phase = 'insert' | 'static' | 'play';
 
@@ -39,7 +39,7 @@ export default function VhsPlayer({
   const [phase, setPhase] = useState<Phase>('insert');
   const { width } = useWindowDimensions();
   const progress = useSharedValue(0);
-  const vcrW = Math.min(width - 40, 360);
+  const vcrW = Math.min(width, APP_MAX_WIDTH);
 
   useEffect(() => {
     progress.value = withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.cubic) });
