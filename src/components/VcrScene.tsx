@@ -60,6 +60,7 @@ export default function VcrScene({
 
   const reduced = !!useReducedMotion();
   const wig = useSharedValue(0);
+  const blink = useSharedValue(1);
 
   useEffect(() => {
     if (!wiggle || reduced) {
@@ -82,6 +83,24 @@ export default function VcrScene({
     return () => cancelAnimation(wig);
   }, [wiggle, reduced, wig]);
 
+  useEffect(() => {
+    if (reduced) {
+      blink.value = 1;
+      return;
+    }
+    // the classic unset-VCR 12:00 blink
+    blink.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 30 }),
+        withDelay(640, withTiming(0, { duration: 30 })),
+        withDelay(420, withTiming(0, { duration: 0 })),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(blink);
+  }, [reduced, blink]);
+
   const tapeStyle = useAnimatedStyle(() => {
     const p = progress ? progress.value : 0;
     const amp = 1 - Math.min(p * 4, 1); // wiggle fades out the moment insert starts
@@ -103,6 +122,7 @@ export default function VcrScene({
       ],
     };
   });
+  const blinkStyle = useAnimatedStyle(() => ({ opacity: blink.value }));
 
   return (
     <View style={{ width: W, height: Hv }}>
@@ -110,28 +130,25 @@ export default function VcrScene({
       <LinearGradient colors={['#2a2433', '#0b0910']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[fill, styles.body, { borderRadius: tapeH * 0.16 }]} />
       <View style={[styles.sheen, { borderTopLeftRadius: tapeH * 0.16, borderTopRightRadius: tapeH * 0.16, height: bezelH }]} />
 
-      {/* top bezel: brand + vents */}
-      <View style={[styles.bezel, { top: bezelH * 0.24, height: bezelH * 0.6, left: W * 0.05, right: W * 0.05 }]}>
+      {/* top bezel: brand (left) + power button (far right) */}
+      <View style={[styles.bezel, { top: bezelH * 0.22, height: bezelH * 0.62, left: W * 0.05, right: W * 0.05 }]}>
         <Text style={[styles.brand, { fontSize: bezelH * 0.46 }]} numberOfLines={1}>
           JERK VEST
         </Text>
-        <View style={styles.vents}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={[styles.vent, { width: side * 0.35 }]} />
-          ))}
+        <View style={[styles.powerBtn, { paddingHorizontal: bezelH * 0.18, paddingVertical: bezelH * 0.08 }]}>
+          <View style={[styles.powerDot, { width: bezelH * 0.16, height: bezelH * 0.16, borderRadius: bezelH * 0.08 }]} />
+          <Text style={[styles.powerLabel, { fontSize: bezelH * 0.3 }]}>PWR</Text>
         </View>
       </View>
 
       {/* dark slot compartment (behind the tape) */}
       <View style={[styles.recess, { left: slotLeft - 12, width: tapeW + 24, top: clipTop - 4, height: clipH + 8 }]} />
 
-      {/* left controls */}
-      <View style={[styles.leftCol, { left: W * 0.05, top: tapeTop + tapeH * 0.08, gap: tapeH * 0.16 }]}>
-        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.26 }]}>
-          <Text style={styles.btnLabel}>PWR</Text>
-        </View>
-        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.26 }]}>
-          <Text style={styles.btnLabel}>EJECT</Text>
+      {/* left control: eject (symbol) */}
+      <View style={[styles.leftCol, { left: W * 0.05, top: tapeTop + tapeH * 0.32 }]}>
+        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.34 }]}>
+          <View style={[styles.ejectTri, { borderLeftWidth: tapeH * 0.07, borderRightWidth: tapeH * 0.07, borderBottomWidth: tapeH * 0.09 }]} />
+          <View style={[styles.ejectBar, { width: tapeH * 0.14, marginTop: tapeH * 0.03 }]} />
         </View>
       </View>
 
@@ -146,13 +163,13 @@ export default function VcrScene({
         </View>
       </View>
 
-      {/* bottom: display + label */}
+      {/* bottom: blinking clock + label */}
       <View style={[styles.bottom, { left: W * 0.05, right: W * 0.05, top: mouthY + pad, height: bottomH - pad }]}>
         <View style={styles.display}>
-          <Text style={[styles.displayText, { fontSize: bottomH * 0.32 }]}>SP  0:00</Text>
+          <Animated.Text style={[styles.displayText, { fontSize: bottomH * 0.34 }, blinkStyle]}>12:00</Animated.Text>
         </View>
         <Text style={[styles.vcrLabel, { fontSize: bottomH * 0.28 }]} numberOfLines={1}>
-          VIDEO CASSETTE RECORDER
+          ACTION COMEDY FILMS
         </Text>
       </View>
 
@@ -184,12 +201,14 @@ const styles = StyleSheet.create({
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: rgba(colors.white, 0.04) },
   bezel: { position: 'absolute', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.55), letterSpacing: 2 },
-  vents: { flexDirection: 'row', gap: 4 },
-  vent: { height: 2, borderRadius: 2, backgroundColor: rgba(colors.white, 0.1) },
+  powerBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 4, backgroundColor: '#1a1622', borderWidth: 1, borderColor: rgba(colors.white, 0.1) },
+  powerDot: { backgroundColor: colors.orange, ...glow(colors.orange, 5, 0.9) },
+  powerLabel: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.55), letterSpacing: 1 },
   recess: { position: 'absolute', backgroundColor: '#05040a', borderRadius: 6, borderWidth: 1, borderColor: '#000' },
   leftCol: { position: 'absolute' },
   btn: { borderRadius: 3, backgroundColor: '#1a1622', borderWidth: 1, borderColor: rgba(colors.white, 0.08), alignItems: 'center', justifyContent: 'center' },
-  btnLabel: { fontFamily: fonts.heading, color: rgba(colors.textBright, 0.5), fontSize: 8, letterSpacing: 1 },
+  ejectTri: { width: 0, height: 0, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: rgba(colors.textBright, 0.6) },
+  ejectBar: { height: 2, borderRadius: 1, backgroundColor: rgba(colors.textBright, 0.6) },
   rightCol: { position: 'absolute', alignItems: 'center' },
   jog: { backgroundColor: '#15121c', borderWidth: 1, borderColor: rgba(colors.white, 0.1), alignItems: 'center', justifyContent: 'center' },
   jogHub: { backgroundColor: '#2a2435', borderWidth: 1, borderColor: rgba(colors.white, 0.08) },
