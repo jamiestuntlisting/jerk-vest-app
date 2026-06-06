@@ -14,11 +14,15 @@ export default function FeaturedHero({
   progress,
   idle,
   onPlay,
+  slotRef,
+  hideTape,
 }: {
-  featured: { title: string; ribbon: string; accent: string };
+  featured: { title: string; ribbon?: string; accent: string };
   progress: SharedValue<number>;
   idle: boolean;
   onPlay: () => void;
+  slotRef: (node: View | null) => void;
+  hideTape: boolean;
 }) {
   const { width } = useWindowDimensions();
   const vcrW = Math.min(width, APP_MAX_WIDTH);
@@ -28,7 +32,7 @@ export default function FeaturedHero({
       <Text style={styles.eyebrow}>NOW PLAYING</Text>
 
       <Pressable onPress={onPlay} disabled={!idle} accessibilityRole="button" accessibilityLabel={`Play ${featured.title}`} style={glow(colors.orange, 28, 0.26)}>
-        <VcrScene width={vcrW} title={featured.title} accent={featured.accent} ribbon={featured.ribbon} progress={progress} wiggle={idle} />
+        <VcrScene width={vcrW} title={featured.title} accent={featured.accent} ribbon={featured.ribbon} progress={progress} wiggle={idle} slotRef={slotRef} hideTape={hideTape} />
       </Pressable>
     </View>
   );

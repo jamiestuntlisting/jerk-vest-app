@@ -8,7 +8,7 @@
  * `wiggle`, the idle tape does a periodic little shimmy to invite a tap.
  */
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -26,6 +26,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 
 import VhsTape from '@/components/VhsTape';
+import { togglePower } from '@/lib/power';
 import { colors, fonts, fill, glow, rgba } from '@/lib/theme';
 
 export default function VcrScene({
@@ -35,6 +36,8 @@ export default function VcrScene({
   ribbon,
   progress,
   wiggle = false,
+  slotRef,
+  hideTape = false,
 }: {
   width: number;
   title: string;
@@ -42,6 +45,8 @@ export default function VcrScene({
   ribbon?: string;
   progress?: SharedValue<number>;
   wiggle?: boolean;
+  slotRef?: (node: View | null) => void;
+  hideTape?: boolean;
 }) {
   const W = width;
   const tapeW = W * 0.62; // the featured tape dominates the deck
@@ -135,10 +140,18 @@ export default function VcrScene({
         <Text style={[styles.brand, { fontSize: bezelH * 0.46 }]} numberOfLines={1}>
           JERK VEST
         </Text>
-        <View style={[styles.powerBtn, { paddingHorizontal: bezelH * 0.18, paddingVertical: bezelH * 0.08 }]}>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            togglePower();
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Power"
+          style={[styles.powerBtn, { paddingHorizontal: bezelH * 0.18, paddingVertical: bezelH * 0.08 }]}>
           <View style={[styles.powerDot, { width: bezelH * 0.16, height: bezelH * 0.16, borderRadius: bezelH * 0.08 }]} />
           <Text style={[styles.powerLabel, { fontSize: bezelH * 0.3 }]}>PWR</Text>
-        </View>
+        </Pressable>
       </View>
 
       {/* dark slot compartment (behind the tape) */}
@@ -174,8 +187,8 @@ export default function VcrScene({
       </View>
 
       {/* featured tape, clipped into the slot (extra side room so the wiggle never clips) */}
-      <View style={{ position: 'absolute', left: slotLeft - 8, top: clipTop, width: tapeW + 16, height: clipH, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-        <Animated.View style={tapeStyle}>
+      <View ref={slotRef} style={{ position: 'absolute', left: slotLeft - 8, top: clipTop, width: tapeW + 16, height: clipH, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
+        <Animated.View style={[tapeStyle, { opacity: hideTape ? 0 : 1 }]}>
           <VhsTape title={title} width={tapeW} accent={accent} />
         </Animated.View>
       </View>

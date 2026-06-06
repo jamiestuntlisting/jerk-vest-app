@@ -197,21 +197,14 @@ export const PROJECTS: Project[] = [GORILLOLOGY, DODGE_BRICK, STUNTLISTING];
 /** The hero "featured tape". Change this to swap what the home pushes — this is
  *  the single value the native app's home will eventually read from the server,
  *  so the menu can differ month to month / when a new film finishes. */
-export const FEATURED = {
-  projectKey: 'dodge-brick',
-  title: 'Dodge Brick',
-  ribbon: 'JUST DROPPED',
-  tagline: 'The latest from Jerk Vest',
-  youtubeId: 'ifg8wNuCd28',
-  accent: '#FF4D2A',
-};
+export type Tape = { key: string; title: string; accent: string; youtubeId: string; ribbon?: string };
 
-export type Tape = { key: string; title: string; target: string; kind: 'route' | 'external'; accent: string };
-
-/** The other videos, each as its own VHS tape on the shelf. */
-export const CATALOG: Tape[] = [
-  { key: 'gorillology', title: 'Gorillology', target: '/gorillology', kind: 'route', accent: '#B45FD6' },
-  { key: 'stuntlisting', title: 'StuntListing', target: '/stuntlisting', kind: 'route', accent: '#5AA9E6' },
+/** Every film as a VHS tape. The first is the one that starts in the VCR; the
+ *  rest sit on the shelf. Tapping a shelf tape swaps it into the deck. */
+export const TAPES: Tape[] = [
+  { key: 'dodge-brick', title: 'Dodge Brick', accent: '#FF4D2A', youtubeId: 'ifg8wNuCd28', ribbon: 'JUST DROPPED' },
+  { key: 'gorillology', title: 'Gorillology', accent: '#B45FD6', youtubeId: 'umJJp33Sv4c' },
+  { key: 'stuntlisting', title: 'StuntListing', accent: '#5AA9E6', youtubeId: 'nyVyFMP1hpI' },
 ];
 
 export type FooterLink = { key: string; label: string; target: string; kind: 'route' | 'external' };

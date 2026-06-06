@@ -1,17 +1,17 @@
 /**
- * The rest of the catalog — each other video as a VHS tape (the same shape as
- * the featured Dodge Brick tape, just rotated 90° to stand upright), sitting on
- * a wood shelf. Tap a tape to open that project.
+ * The shelf — the tapes not currently in the VCR, standing upright on a wood
+ * shelf (the featured-tape graphic rotated a quarter-turn). Tapping a tape
+ * reports its on-screen position so the home can fly it into the deck.
  */
+import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import VhsTape from '@/components/VhsTape';
-import { CATALOG } from '@/lib/content';
-import { track } from '@/lib/analytics';
-import { openExternal } from '@/lib/links';
+import type { Tape } from '@/lib/content';
 import { APP_MAX_WIDTH, colors, fonts, fill, glow, rgba, space } from '@/lib/theme';
+
+export type Rect = { x: number; y: number; width: number; height: number };
 
 /** The featured-tape graphic, rotated a quarter-turn so it stands on its end. */
 function StandingTape({ title, accent, length }: { title: string; accent: string; length: number }) {
@@ -37,30 +37,40 @@ function WoodShelf({ width }: { width: number }) {
   );
 }
 
-export default function TapeStack() {
-  const router = useRouter();
+export default function TapeStack({
+  tapes,
+  hiddenKey,
+  onPressTape,
+}: {
+  tapes: Tape[];
+  hiddenKey: string | null;
+  onPressTape: (key: string, rect: Rect) => void;
+}) {
   const { width } = useWindowDimensions();
   const cap = Math.min(width, APP_MAX_WIDTH);
   const length = cap * 0.46;
   const shelfW = cap * 0.82;
+  const refs = useRef<Record<string, View | null>>({});
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.heading}>MORE TAPES</Text>
       <View style={styles.stage}>
         <View style={styles.row}>
-          {CATALOG.map((t) => (
+          {tapes.map((t) => (
             <Pressable
               key={t.key}
               onPress={() => {
-                track('menu_click', { label: t.key, meta: { area: 'catalog' } });
-                if (t.kind === 'external') void openExternal(t.target, t.key);
-                else router.push(t.target as never);
+                const node = refs.current[t.key];
+                if (!node) return;
+                node.measureInWindow((x, y, w, h) => onPressTape(t.key, { x, y, width: w, height: h }));
               }}
-              style={({ pressed }) => [styles.tapeShadow, pressed && { opacity: 0.6, transform: [{ translateY: 1 }] }]}
+              style={({ pressed }) => [styles.tapeShadow, { opacity: hiddenKey === t.key ? 0 : pressed ? 0.6 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel={t.title}>
-              <StandingTape title={t.title} accent={t.accent} length={length} />
+              <View ref={(r) => { refs.current[t.key] = r; }}>
+                <StandingTape title={t.title} accent={t.accent} length={length} />
+              </View>
             </Pressable>
           ))}
         </View>

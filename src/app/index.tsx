@@ -1,30 +1,48 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Easing, runOnJS, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import JerkVestLogo from '@/components/JerkVestLogo';
 import FeaturedHero from '@/components/FeaturedHero';
-import TapeStack from '@/components/TapeStack';
+import TapeStack, { type Rect } from '@/components/TapeStack';
+import SwapLayer from '@/components/SwapLayer';
 import VhsPlayer from '@/components/VhsPlayer';
-import { FEATURED, FOOTER_LINKS } from '@/lib/content';
+import { TAPES, FOOTER_LINKS } from '@/lib/content';
 import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
-import { colors, fonts, space } from '@/lib/theme';
+import { APP_MAX_WIDTH, colors, fonts, space } from '@/lib/theme';
 
 type Phase = 'idle' | 'inserting' | 'watching';
+type Swap = { into: string; out: string; vcrRect: Rect; shelfRect: Rect };
 
 export default function MenuScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const [featuredKey, setFeaturedKey] = useState(TAPES[0].key);
+  const [shelfOrder, setShelfOrder] = useState<string[]>(() => TAPES.slice(1).map((t) => t.key));
   const [phase, setPhase] = useState<Phase>('idle');
+  const [swap, setSwap] = useState<Swap | null>(null);
+
   const progress = useSharedValue(0);
+  const swapProgress = useSharedValue(0);
+  const slotNode = useRef<View | null>(null);
+
+  const byKey = (k: string) => TAPES.find((t) => t.key === k)!;
+  const featured = byKey(featuredKey);
+  const shelfTapes = shelfOrder.map(byKey);
+
+  const cap = Math.min(width, APP_MAX_WIDTH);
+  const vcrTapeW = cap * 0.62;
+  const shelfLen = cap * 0.46;
+
+  const busy = phase !== 'idle' || swap !== null;
 
   const startPlay = () => {
-    if (phase !== 'idle') return;
-    track('video_play', { label: FEATURED.youtubeId, meta: { title: FEATURED.title, area: 'hero' } });
+    if (busy) return;
+    track('video_play', { label: featured.youtubeId, meta: { title: featured.title, area: 'hero' } });
     setPhase('inserting');
-    // push the tape in right here on the home screen, then hand off to the film
     progress.value = withTiming(1, { duration: 950, easing: Easing.inOut(Easing.cubic) }, (finished) => {
       'worklet';
       if (finished) runOnJS(setPhase)('watching');
@@ -33,7 +51,29 @@ export default function MenuScreen() {
 
   const closePlay = () => {
     setPhase('idle');
-    progress.value = 0; // eject — tape sits back in the open slot
+    progress.value = 0;
+  };
+
+  const finishSwap = (intoKey: string, outKey: string) => {
+    setShelfOrder((order) => order.map((k) => (k === intoKey ? outKey : k)));
+    setFeaturedKey(intoKey);
+    setSwap(null);
+    swapProgress.value = 0;
+  };
+
+  const onPressTape = (key: string, shelfRect: Rect) => {
+    if (busy) return;
+    const node = slotNode.current;
+    if (!node) return;
+    node.measureInWindow((x, y, w, h) => {
+      track('menu_click', { label: key, meta: { area: 'shelf-swap' } });
+      setSwap({ into: key, out: featuredKey, vcrRect: { x, y, width: w, height: h }, shelfRect });
+      swapProgress.value = 0;
+      swapProgress.value = withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+        'worklet';
+        if (finished) runOnJS(finishSwap)(key, featuredKey);
+      });
+    });
   };
 
   return (
@@ -44,9 +84,18 @@ export default function MenuScreen() {
             <JerkVestLogo size={0.46} showProductions={false} />
           </View>
 
-          <FeaturedHero featured={FEATURED} progress={progress} idle={phase === 'idle'} onPlay={startPlay} />
+          <FeaturedHero
+            featured={featured}
+            progress={progress}
+            idle={phase === 'idle' && !swap}
+            onPlay={startPlay}
+            slotRef={(n) => {
+              slotNode.current = n;
+            }}
+            hideTape={!!swap}
+          />
 
-          <TapeStack />
+          <TapeStack tapes={shelfTapes} hiddenKey={swap?.into ?? null} onPressTape={onPressTape} />
 
           <View style={styles.footer}>
             {FOOTER_LINKS.map((l) => (
@@ -65,7 +114,19 @@ export default function MenuScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {phase === 'watching' ? <VhsPlayer youtubeId={FEATURED.youtubeId} onClose={closePlay} /> : null}
+      {swap ? (
+        <SwapLayer
+          into={byKey(swap.into)}
+          out={byKey(swap.out)}
+          vcrRect={swap.vcrRect}
+          shelfRect={swap.shelfRect}
+          vcrTapeW={vcrTapeW}
+          shelfLen={shelfLen}
+          progress={swapProgress}
+        />
+      ) : null}
+
+      {phase === 'watching' ? <VhsPlayer youtubeId={featured.youtubeId} onClose={closePlay} /> : null}
     </View>
   );
 }
