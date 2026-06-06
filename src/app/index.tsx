@@ -28,6 +28,7 @@ export default function MenuScreen() {
   const progress = useSharedValue(0);
   const swapProgress = useSharedValue(0);
   const slotNode = useRef<View | null>(null);
+  const rootNode = useRef<View | null>(null);
 
   const byKey = (k: string) => TAPES.find((t) => t.key === k)!;
   const featured = byKey(featuredKey);
@@ -63,21 +64,31 @@ export default function MenuScreen() {
 
   const onPressTape = (key: string, shelfRect: Rect) => {
     if (busy) return;
-    const node = slotNode.current;
-    if (!node) return;
-    node.measureInWindow((x, y, w, h) => {
-      track('menu_click', { label: key, meta: { area: 'shelf-swap' } });
-      setSwap({ into: key, out: featuredKey, vcrRect: { x, y, width: w, height: h }, shelfRect });
-      swapProgress.value = 0;
-      swapProgress.value = withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) }, (finished) => {
-        'worklet';
-        if (finished) runOnJS(finishSwap)(key, featuredKey);
+    const slot = slotNode.current;
+    const root = rootNode.current;
+    if (!slot || !root) return;
+    // measureInWindow gives viewport coords; the overlay is anchored to the
+    // centered column, so convert everything to coords local to the root.
+    root.measureInWindow((rx, ry) => {
+      slot.measureInWindow((sx, sy, sw, sh) => {
+        track('menu_click', { label: key, meta: { area: 'shelf-swap' } });
+        setSwap({
+          into: key,
+          out: featuredKey,
+          vcrRect: { x: sx - rx, y: sy - ry, width: sw, height: sh },
+          shelfRect: { x: shelfRect.x - rx, y: shelfRect.y - ry, width: shelfRect.width, height: shelfRect.height },
+        });
+        swapProgress.value = 0;
+        swapProgress.value = withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+          'worklet';
+          if (finished) runOnJS(finishSwap)(key, featuredKey);
+        });
       });
     });
   };
 
   return (
-    <View style={styles.root}>
+    <View ref={rootNode} style={styles.root}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.logo}>
