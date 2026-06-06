@@ -3,7 +3,7 @@
  * wiggles to invite a tap; tapping plays the insert in place. When the deck is
  * empty (tape ejected) it prompts to load one instead.
  */
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 
 import VcrScene from '@/components/VcrScene';
@@ -35,7 +35,7 @@ export default function FeaturedHero({
     <View style={styles.hero}>
       <Text style={styles.eyebrow}>{hasTape ? 'NOW PLAYING' : 'INSERT A TAPE'}</Text>
 
-      <Pressable onPress={onPlay} disabled={!idle || !hasTape} accessibilityRole="button" accessibilityLabel={featured ? `Play ${featured.title}` : 'Empty deck'} style={glow(colors.orange, 28, 0.26)}>
+      <View style={glow(colors.orange, 28, 0.26)}>
         <VcrScene
           width={vcrW}
           title={featured?.title ?? ''}
@@ -46,9 +46,11 @@ export default function FeaturedHero({
           slotRef={slotRef}
           hideTape={hideTape}
           hasTape={hasTape}
+          onPlay={onPlay}
+          canPlay={idle && hasTape}
           onEject={onEject}
         />
-      </Pressable>
+      </View>
     </View>
   );
 }
@@ -57,3 +59,4 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', justifyContent: 'center', width: '100%' },
   eyebrow: { fontFamily: fonts.heading, color: colors.purpleGlow, letterSpacing: 6, fontSize: 14, marginBottom: 16, ...glow(colors.purpleGlow, 8, 0.5) },
 });
+
