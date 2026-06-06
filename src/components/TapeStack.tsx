@@ -1,9 +1,9 @@
 /**
- * The shelf — the tapes not currently in the VCR, standing upright on a wood
- * shelf (the featured-tape graphic rotated a quarter-turn). Tapping a tape
- * reports its on-screen position so the home can fly it into the deck.
+ * The shelf — a fixed slot for every tape, standing upright on a wood shelf
+ * (the featured-tape graphic rotated a quarter-turn). A tape's slot is empty
+ * (a faint ghost) while it's in the VCR or mid-flight. Tapping a tape reports
+ * its key so the home can fly it into the deck.
  */
-import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -13,7 +13,6 @@ import { APP_MAX_WIDTH, colors, fonts, fill, glow, rgba, space } from '@/lib/the
 
 export type Rect = { x: number; y: number; width: number; height: number };
 
-/** The featured-tape graphic, rotated a quarter-turn so it stands on its end. */
 function StandingTape({ title, accent, length }: { title: string; accent: string; length: number }) {
   const thick = length * 0.34;
   return (
@@ -39,40 +38,45 @@ function WoodShelf({ width }: { width: number }) {
 
 export default function TapeStack({
   tapes,
-  hiddenKey,
+  emptyKeys,
   onPressTape,
+  onSlotRef,
 }: {
   tapes: Tape[];
-  hiddenKey: string | null;
-  onPressTape: (key: string, rect: Rect) => void;
+  emptyKeys: string[];
+  onPressTape: (key: string) => void;
+  onSlotRef: (key: string, node: View | null) => void;
 }) {
   const { width } = useWindowDimensions();
   const cap = Math.min(width, APP_MAX_WIDTH);
   const length = cap * 0.46;
-  const shelfW = cap * 0.82;
-  const refs = useRef<Record<string, View | null>>({});
+  const thick = length * 0.34;
+  const shelfW = cap * 0.86;
+  const heading = emptyKeys.length === 0 ? 'PICK A TAPE' : 'MORE TAPES';
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.heading}>MORE TAPES</Text>
+      <Text style={styles.heading}>{heading}</Text>
       <View style={styles.stage}>
         <View style={styles.row}>
-          {tapes.map((t) => (
-            <Pressable
-              key={t.key}
-              onPress={() => {
-                const node = refs.current[t.key];
-                if (!node) return;
-                node.measureInWindow((x, y, w, h) => onPressTape(t.key, { x, y, width: w, height: h }));
-              }}
-              style={({ pressed }) => [styles.tapeShadow, { opacity: hiddenKey === t.key ? 0 : pressed ? 0.6 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel={t.title}>
-              <View ref={(r) => { refs.current[t.key] = r; }}>
-                <StandingTape title={t.title} accent={t.accent} length={length} />
+          {tapes.map((t) => {
+            const empty = emptyKeys.includes(t.key);
+            return (
+              <View key={t.key} ref={(n) => onSlotRef(t.key, n)} style={{ width: thick, height: length }}>
+                {empty ? (
+                  <View style={[styles.ghost, { borderRadius: thick * 0.14 }]} />
+                ) : (
+                  <Pressable
+                    onPress={() => onPressTape(t.key)}
+                    style={({ pressed }) => [styles.tapeShadow, pressed && { opacity: 0.6, transform: [{ translateY: 1 }] }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.title}>
+                    <StandingTape title={t.title} accent={t.accent} length={length} />
+                  </Pressable>
+                )}
               </View>
-            </Pressable>
-          ))}
+            );
+          })}
         </View>
         <WoodShelf width={shelfW} />
       </View>
@@ -84,7 +88,8 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: space.sm },
   heading: { fontFamily: fonts.heading, color: colors.textDim, letterSpacing: 5, fontSize: 12 },
   stage: { alignItems: 'center' },
-  row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.xl, zIndex: 1 },
+  row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.lg, zIndex: 1 },
+  ghost: { flex: 1, borderWidth: 1, borderColor: rgba(colors.white, 0.08), backgroundColor: rgba(colors.black, 0.18) },
   tapeShadow: { ...glow(colors.black, 10, 0.55) },
   shelf: { height: 26, borderRadius: 3, overflow: 'hidden', marginTop: -3, ...glow(colors.black, 14, 0.5) },
   shelfTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundColor: rgba('#9a7048', 0.9) },

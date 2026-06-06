@@ -6,43 +6,79 @@ import { Easing, runOnJS, useSharedValue, withTiming } from 'react-native-reanim
 
 import JerkVestLogo from '@/components/JerkVestLogo';
 import FeaturedHero from '@/components/FeaturedHero';
-import TapeStack, { type Rect } from '@/components/TapeStack';
-import SwapLayer from '@/components/SwapLayer';
+import TapeStack from '@/components/TapeStack';
+import SwapLayer, { type Flight } from '@/components/SwapLayer';
 import VhsPlayer from '@/components/VhsPlayer';
 import { TAPES, FOOTER_LINKS } from '@/lib/content';
 import { track } from '@/lib/analytics';
 import { openExternal } from '@/lib/links';
 import { APP_MAX_WIDTH, colors, fonts, space } from '@/lib/theme';
 
-type Phase = 'idle' | 'inserting' | 'watching';
-type Swap = { into: string; out: string; vcrRect: Rect; shelfRect: Rect };
+type Rect = { x: number; y: number; width: number; height: number };
+const center = (r: Rect) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
 
 export default function MenuScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [featuredKey, setFeaturedKey] = useState(TAPES[0].key);
-  const [shelfOrder, setShelfOrder] = useState<string[]>(() => TAPES.slice(1).map((t) => t.key));
-  const [phase, setPhase] = useState<Phase>('idle');
-  const [swap, setSwap] = useState<Swap | null>(null);
+  const [featuredKey, setFeaturedKey] = useState<string | null>(TAPES[0].key);
+  const [phase, setPhase] = useState<'idle' | 'inserting' | 'watching'>('idle');
+  const [flights, setFlights] = useState<Flight[] | null>(null);
+  const [hideShelfKey, setHideShelfKey] = useState<string | null>(null);
+  const [hideVcrTape, setHideVcrTape] = useState(false);
 
   const progress = useSharedValue(0);
   const swapProgress = useSharedValue(0);
   const slotNode = useRef<View | null>(null);
   const rootNode = useRef<View | null>(null);
+  const shelfNodes = useRef<Record<string, View | null>>({});
+  const pendingCommit = useRef<(() => void) | null>(null);
 
   const byKey = (k: string) => TAPES.find((t) => t.key === k)!;
-  const featured = byKey(featuredKey);
-  const shelfTapes = shelfOrder.map(byKey);
+  const featured = featuredKey ? byKey(featuredKey) : null;
 
   const cap = Math.min(width, APP_MAX_WIDTH);
   const vcrTapeW = cap * 0.62;
+  const tapeH = vcrTapeW * 0.34;
   const shelfLen = cap * 0.46;
+  const s = shelfLen / vcrTapeW; // upright scale
 
-  const busy = phase !== 'idle' || swap !== null;
+  const animating = flights !== null;
+  const busy = phase !== 'idle' || animating;
+
+  /** Measure a node's rect in coordinates local to the home root. */
+  const measureRel = (node: View) =>
+    new Promise<Rect>((resolve) => {
+      const root = rootNode.current;
+      if (!root) return;
+      root.measureInWindow((rx, ry) => {
+        node.measureInWindow((x, y, w, h) => resolve({ x: x - rx, y: y - ry, width: w, height: h }));
+      });
+    });
+
+  const finishFlights = () => {
+    pendingCommit.current?.();
+    pendingCommit.current = null;
+    setFlights(null);
+    setHideShelfKey(null);
+    setHideVcrTape(false);
+    swapProgress.value = 0;
+  };
+
+  const runFlights = (fl: Flight[], hideShelf: string | null, hideVcr: boolean, commit: () => void) => {
+    pendingCommit.current = commit;
+    setHideShelfKey(hideShelf);
+    setHideVcrTape(hideVcr);
+    setFlights(fl);
+    swapProgress.value = 0;
+    swapProgress.value = withTiming(1, { duration: 950, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+      'worklet';
+      if (finished) runOnJS(finishFlights)();
+    });
+  };
 
   const startPlay = () => {
-    if (busy) return;
-    track('video_play', { label: featured.youtubeId, meta: { title: featured.title, area: 'hero' } });
+    if (busy || !featured) return;
+    track('video_play', { label: featured.youtubeId, meta: { title: featured.title } });
     setPhase('inserting');
     progress.value = withTiming(1, { duration: 950, easing: Easing.inOut(Easing.cubic) }, (finished) => {
       'worklet';
@@ -55,37 +91,57 @@ export default function MenuScreen() {
     progress.value = 0;
   };
 
-  const finishSwap = (intoKey: string, outKey: string) => {
-    setShelfOrder((order) => order.map((k) => (k === intoKey ? outKey : k)));
-    setFeaturedKey(intoKey);
-    setSwap(null);
-    swapProgress.value = 0;
-  };
-
-  const onPressTape = (key: string, shelfRect: Rect) => {
+  const onPressTape = async (key: string) => {
     if (busy) return;
     const slot = slotNode.current;
-    const root = rootNode.current;
-    if (!slot || !root) return;
-    // measureInWindow gives viewport coords; the overlay is anchored to the
-    // centered column, so convert everything to coords local to the root.
-    root.measureInWindow((rx, ry) => {
-      slot.measureInWindow((sx, sy, sw, sh) => {
-        track('menu_click', { label: key, meta: { area: 'shelf-swap' } });
-        setSwap({
-          into: key,
-          out: featuredKey,
-          vcrRect: { x: sx - rx, y: sy - ry, width: sw, height: sh },
-          shelfRect: { x: shelfRect.x - rx, y: shelfRect.y - ry, width: shelfRect.width, height: shelfRect.height },
-        });
-        swapProgress.value = 0;
-        swapProgress.value = withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.cubic) }, (finished) => {
-          'worklet';
-          if (finished) runOnJS(finishSwap)(key, featuredKey);
-        });
-      });
-    });
+    const keyNode = shelfNodes.current[key];
+    if (!rootNode.current || !slot || !keyNode) return;
+    const vc = center(await measureRel(slot));
+    const kc = center(await measureRel(keyNode));
+    track('menu_click', { label: key, meta: { area: 'shelf' } });
+
+    if (featured && featuredKey) {
+      const featNode = shelfNodes.current[featuredKey];
+      if (!featNode) return;
+      const fc = center(await measureRel(featNode));
+      const out = featured;
+      runFlights(
+        [
+          { key: 'in', tape: byKey(key), from: kc, to: vc, fromRot: 90, toRot: 0, fromScale: s, toScale: 1 },
+          { key: 'out', tape: out, from: vc, to: fc, fromRot: 0, toRot: 90, fromScale: 1, toScale: s },
+        ],
+        key,
+        true,
+        () => setFeaturedKey(key),
+      );
+    } else {
+      runFlights(
+        [{ key: 'in', tape: byKey(key), from: kc, to: vc, fromRot: 90, toRot: 0, fromScale: s, toScale: 1 }],
+        key,
+        false,
+        () => setFeaturedKey(key),
+      );
+    }
   };
+
+  const onEject = async () => {
+    if (busy || !featured || !featuredKey) return;
+    const slot = slotNode.current;
+    const featNode = shelfNodes.current[featuredKey];
+    if (!rootNode.current || !slot || !featNode) return;
+    const vc = center(await measureRel(slot));
+    const fc = center(await measureRel(featNode));
+    track('menu_click', { label: featuredKey, meta: { area: 'eject' } });
+    const out = featured;
+    runFlights(
+      [{ key: 'out', tape: out, from: vc, to: fc, fromRot: 0, toRot: 90, fromScale: 1, toScale: s }],
+      null,
+      true,
+      () => setFeaturedKey(null),
+    );
+  };
+
+  const emptyKeys = [featuredKey, hideShelfKey].filter(Boolean) as string[];
 
   return (
     <View ref={rootNode} style={styles.root}>
@@ -98,15 +154,23 @@ export default function MenuScreen() {
           <FeaturedHero
             featured={featured}
             progress={progress}
-            idle={phase === 'idle' && !swap}
+            idle={phase === 'idle' && !animating}
             onPlay={startPlay}
+            onEject={onEject}
             slotRef={(n) => {
               slotNode.current = n;
             }}
-            hideTape={!!swap}
+            hideTape={hideVcrTape}
           />
 
-          <TapeStack tapes={shelfTapes} hiddenKey={swap?.into ?? null} onPressTape={onPressTape} />
+          <TapeStack
+            tapes={TAPES}
+            emptyKeys={emptyKeys}
+            onPressTape={onPressTape}
+            onSlotRef={(k, n) => {
+              shelfNodes.current[k] = n;
+            }}
+          />
 
           <View style={styles.footer}>
             {FOOTER_LINKS.map((l) => (
@@ -125,19 +189,9 @@ export default function MenuScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {swap ? (
-        <SwapLayer
-          into={byKey(swap.into)}
-          out={byKey(swap.out)}
-          vcrRect={swap.vcrRect}
-          shelfRect={swap.shelfRect}
-          vcrTapeW={vcrTapeW}
-          shelfLen={shelfLen}
-          progress={swapProgress}
-        />
-      ) : null}
+      {flights ? <SwapLayer flights={flights} w={vcrTapeW} h={tapeH} progress={swapProgress} /> : null}
 
-      {phase === 'watching' ? <VhsPlayer youtubeId={featured.youtubeId} onClose={closePlay} /> : null}
+      {phase === 'watching' && featured ? <VhsPlayer youtubeId={featured.youtubeId} onClose={closePlay} /> : null}
     </View>
   );
 }

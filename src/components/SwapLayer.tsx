@@ -1,7 +1,8 @@
 /**
- * The tape-swap animation. When a shelf tape is tapped, two tapes fly at once:
- * the current VCR tape arcs out to the shelf (landscape → upright) while the
- * tapped tape arcs into the VCR (upright → landscape). Driven by one progress.
+ * Flying-tape animation layer. Renders one or more "flights" — each a tape
+ * arcing between two points while rotating/scaling (flat ⇆ upright). Used for
+ * swapping (2 flights), inserting, and ejecting (1 flight). All coordinates are
+ * local to the home root (already offset-corrected by the caller).
  */
 import { View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
@@ -9,35 +10,21 @@ import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react
 import VhsTape from '@/components/VhsTape';
 import { fill } from '@/lib/theme';
 
-type Rect = { x: number; y: number; width: number; height: number };
-type Tape = { title: string; accent: string };
 type Pt = { x: number; y: number };
 
-const center = (r: Rect): Pt => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
-
-function Flyer({
-  tape,
-  from,
-  to,
-  fromRot,
-  toRot,
-  fromScale,
-  toScale,
-  w,
-  h,
-  progress,
-}: {
-  tape: Tape;
+export type Flight = {
+  key: string;
+  tape: { title: string; accent: string };
   from: Pt;
   to: Pt;
   fromRot: number;
   toRot: number;
   fromScale: number;
   toScale: number;
-  w: number;
-  h: number;
-  progress: SharedValue<number>;
-}) {
+};
+
+function Flyer({ flight, w, h, progress }: { flight: Flight; w: number; h: number; progress: SharedValue<number> }) {
+  const { from, to, fromRot, toRot, fromScale, toScale, tape } = flight;
   const style = useAnimatedStyle(() => {
     const p = progress.value;
     const cx = interpolate(p, [0, 1], [from.x, to.x]);
@@ -59,35 +46,12 @@ function Flyer({
   );
 }
 
-export default function SwapLayer({
-  into,
-  out,
-  vcrRect,
-  shelfRect,
-  vcrTapeW,
-  shelfLen,
-  progress,
-}: {
-  into: Tape;
-  out: Tape;
-  vcrRect: Rect;
-  shelfRect: Rect;
-  vcrTapeW: number;
-  shelfLen: number;
-  progress: SharedValue<number>;
-}) {
-  const w = vcrTapeW;
-  const h = vcrTapeW * 0.34;
-  const s = shelfLen / vcrTapeW; // upright tapes are scaled down from the deck size
-  const vc = center(vcrRect);
-  const sc = center(shelfRect);
-
+export default function SwapLayer({ flights, w, h, progress }: { flights: Flight[]; w: number; h: number; progress: SharedValue<number> }) {
   return (
     <View style={[fill, { zIndex: 150 }]} pointerEvents="none">
-      {/* current featured: VCR (flat) → shelf (upright) */}
-      <Flyer tape={out} from={vc} to={sc} fromRot={0} toRot={90} fromScale={1} toScale={s} w={w} h={h} progress={progress} />
-      {/* tapped tape: shelf (upright) → VCR (flat) */}
-      <Flyer tape={into} from={sc} to={vc} fromRot={90} toRot={0} fromScale={s} toScale={1} w={w} h={h} progress={progress} />
+      {flights.map((f) => (
+        <Flyer key={f.key} flight={f} w={w} h={h} progress={progress} />
+      ))}
     </View>
   );
 }

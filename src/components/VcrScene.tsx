@@ -1,13 +1,13 @@
 /**
- * A front-on VCR with the featured VHS seated in its open slot, fully visible.
- * Full-bleed width; the tape is the star and the deck is wide-and-short like a
- * real VCR, with the controls in the margins either side of the slot.
+ * A front-on VCR with the featured VHS seated in its open slot. Full-bleed
+ * width; wide-and-short like a real deck, controls in the margins.
  *
- * Drives the insert: pass a `progress` shared value (0→1) and the tape pushes
- * straight down into the slot, then the plastic door swings shut over it. With
- * `wiggle`, the idle tape does a periodic little shimmy to invite a tap.
+ * Interactions: power (greyscale toggle), eject (sends the tape back to the
+ * shelf), and the clock (tap to set it — it stops blinking once you do). The
+ * tape pushes into the slot on play via the shared `progress`, and the idle
+ * tape wiggles to invite a tap.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -29,6 +29,13 @@ import VhsTape from '@/components/VhsTape';
 import { togglePower } from '@/lib/power';
 import { colors, fonts, fill, glow, rgba } from '@/lib/theme';
 
+function fmtClock(mins: number) {
+  const h24 = Math.floor(mins / 60);
+  const m = mins % 60;
+  const h12 = ((h24 + 11) % 12) + 1;
+  return `${h12}:${String(m).padStart(2, '0')}`;
+}
+
 export default function VcrScene({
   width,
   title,
@@ -38,6 +45,8 @@ export default function VcrScene({
   wiggle = false,
   slotRef,
   hideTape = false,
+  hasTape = true,
+  onEject,
 }: {
   width: number;
   title: string;
@@ -47,9 +56,11 @@ export default function VcrScene({
   wiggle?: boolean;
   slotRef?: (node: View | null) => void;
   hideTape?: boolean;
+  hasTape?: boolean;
+  onEject?: () => void;
 }) {
   const W = width;
-  const tapeW = W * 0.62; // the featured tape dominates the deck
+  const tapeW = W * 0.62;
   const tapeH = tapeW * 0.34;
   const pad = 8;
   const bezelH = tapeH * 0.55;
@@ -66,6 +77,7 @@ export default function VcrScene({
   const reduced = !!useReducedMotion();
   const wig = useSharedValue(0);
   const blink = useSharedValue(1);
+  const [clock, setClock] = useState({ set: false, mins: 12 * 60 });
 
   useEffect(() => {
     if (!wiggle || reduced) {
@@ -73,7 +85,6 @@ export default function VcrScene({
       wig.value = 0;
       return;
     }
-    // quick shimmy, then a pause, repeating — an attention nudge
     wig.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 90 }),
@@ -89,11 +100,11 @@ export default function VcrScene({
   }, [wiggle, reduced, wig]);
 
   useEffect(() => {
-    if (reduced) {
-      blink.value = 1;
+    if (reduced || clock.set) {
+      cancelAnimation(blink);
+      blink.value = 1; // steady once the clock is set
       return;
     }
-    // the classic unset-VCR 12:00 blink
     blink.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 30 }),
@@ -104,11 +115,11 @@ export default function VcrScene({
       false,
     );
     return () => cancelAnimation(blink);
-  }, [reduced, blink]);
+  }, [reduced, clock.set, blink]);
 
   const tapeStyle = useAnimatedStyle(() => {
     const p = progress ? progress.value : 0;
-    const amp = 1 - Math.min(p * 4, 1); // wiggle fades out the moment insert starts
+    const amp = 1 - Math.min(p * 4, 1);
     return {
       transform: [
         { translateY: interpolate(p, [0, 0.6], [0, slideDist], Extrapolation.CLAMP) },
@@ -131,11 +142,10 @@ export default function VcrScene({
 
   return (
     <View style={{ width: W, height: Hv }}>
-      {/* body */}
       <LinearGradient colors={['#2a2433', '#0b0910']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[fill, styles.body, { borderRadius: tapeH * 0.16 }]} />
       <View style={[styles.sheen, { borderTopLeftRadius: tapeH * 0.16, borderTopRightRadius: tapeH * 0.16, height: bezelH }]} />
 
-      {/* top bezel: brand (left) + power button (far right) */}
+      {/* top bezel: brand (left) + power (far right) */}
       <View style={[styles.bezel, { top: bezelH * 0.22, height: bezelH * 0.62, left: W * 0.05, right: W * 0.05 }]}>
         <Text style={[styles.brand, { fontSize: bezelH * 0.46 }]} numberOfLines={1}>
           JERK VEST
@@ -154,18 +164,26 @@ export default function VcrScene({
         </Pressable>
       </View>
 
-      {/* dark slot compartment (behind the tape) */}
+      {/* dark slot compartment */}
       <View style={[styles.recess, { left: slotLeft - 12, width: tapeW + 24, top: clipTop - 4, height: clipH + 8 }]} />
 
-      {/* left control: eject (symbol) */}
+      {/* left control: eject */}
       <View style={[styles.leftCol, { left: W * 0.05, top: tapeTop + tapeH * 0.32 }]}>
-        <View style={[styles.btn, { width: side * 0.62, height: tapeH * 0.34 }]}>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onEject?.();
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Eject"
+          style={[styles.btn, { width: side * 0.62, height: tapeH * 0.34 }]}>
           <View style={[styles.ejectTri, { borderLeftWidth: tapeH * 0.07, borderRightWidth: tapeH * 0.07, borderBottomWidth: tapeH * 0.09 }]} />
           <View style={[styles.ejectBar, { width: tapeH * 0.14, marginTop: tapeH * 0.03 }]} />
-        </View>
+        </Pressable>
       </View>
 
-      {/* right controls: jog dial + transport */}
+      {/* right controls */}
       <View style={[styles.rightCol, { right: W * 0.05, top: tapeTop, gap: tapeH * 0.14 }]}>
         <View style={[styles.jog, { width: side * 0.6, height: side * 0.6, borderRadius: side * 0.3 }]}>
           <View style={[styles.jogHub, { width: side * 0.22, height: side * 0.22, borderRadius: side * 0.11 }]} />
@@ -176,25 +194,35 @@ export default function VcrScene({
         </View>
       </View>
 
-      {/* bottom: blinking clock + label */}
+      {/* bottom: settable clock + label */}
       <View style={[styles.bottom, { left: W * 0.05, right: W * 0.05, top: mouthY + pad, height: bottomH - pad }]}>
-        <View style={styles.display}>
-          <Animated.Text style={[styles.displayText, { fontSize: bottomH * 0.34 }, blinkStyle]}>12:00</Animated.Text>
-        </View>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            setClock((c) => ({ set: true, mins: (c.mins + 10) % (24 * 60) }));
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Set clock"
+          style={styles.display}>
+          <Animated.Text style={[styles.displayText, { fontSize: bottomH * 0.34 }, blinkStyle]}>{clock.set ? fmtClock(clock.mins) : '12:00'}</Animated.Text>
+        </Pressable>
         <Text style={[styles.vcrLabel, { fontSize: bottomH * 0.28 }]} numberOfLines={1}>
           ACTION COMEDY FILMS
         </Text>
       </View>
 
-      {/* featured tape, clipped into the slot (extra side room so the wiggle never clips) */}
+      {/* featured tape, clipped into the slot */}
       <View ref={slotRef} style={{ position: 'absolute', left: slotLeft - 8, top: clipTop, width: tapeW + 16, height: clipH, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' }}>
-        <Animated.View style={[tapeStyle, { opacity: hideTape ? 0 : 1 }]}>
-          <VhsTape title={title} width={tapeW} accent={accent} />
-        </Animated.View>
+        {hasTape ? (
+          <Animated.View style={[tapeStyle, { opacity: hideTape ? 0 : 1 }]}>
+            <VhsTape title={title} width={tapeW} accent={accent} />
+          </Animated.View>
+        ) : null}
       </View>
 
-      {/* ribbon on the tape (home only) */}
-      {ribbon ? (
+      {/* ribbon (home only, when a tape is loaded) */}
+      {ribbon && hasTape && !hideTape ? (
         <View style={[styles.ribbon, { left: slotLeft - 7, top: tapeTop - 1 }]}>
           <Text style={styles.ribbonText}>{ribbon}</Text>
         </View>
